@@ -1,556 +1,170 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GoDork – Find what they forgot to hide</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=VT323&family=Courier+Prime:wght@400;700&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GoDork — Google Dorking Framework. Find what they forgot to hide.">
+  <meta name="color-scheme" content="dark light">
+  <title>GoDork · Google Dorking Framework</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+  /* ========== DESIGN TOKENS ========== */
   :root {
     --bg: #0d0f14;
     --surface: #13161d;
-    --surface2: #1a1e28;
+    --surface-2: #1a1e28;
     --border: #252a38;
+    --border-strong: #313749;
     --red: #e8291c;
-    --red2: #ff4433;
-    --red-glow: rgba(232,41,28,0.18);
+    --red-2: #ff4433;
+    --red-glow: rgba(232, 41, 28, 0.18);
     --cyan: #00e5ff;
-    --cyan-dim: rgba(0,229,255,0.12);
+    --green: #3aca7c;
     --text: #c8cdd8;
     --text-dim: #5a6278;
     --text-bright: #eef0f5;
-    --mono: 'VT323', 'Courier New', monospace;
-    --body: 'Courier Prime', 'Courier New', monospace;
-    --sans: 'Courier Prime', monospace;
+
+    --font-mono: 'VT323', 'Courier New', monospace;
+    --font-body: 'Courier Prime', 'Courier New', monospace;
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 20px;
+
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+    --dur-fast: 0.12s;
+    --dur-med: 0.2s;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  body.light-mode {
+  [data-theme="light"] {
     --bg: #f0ede6;
     --surface: #e8e4dc;
-    --surface2: #ddd9d0;
+    --surface-2: #ddd9d0;
     --border: #c8c4bc;
+    --border-strong: #a8a49c;
     --red: #c0160b;
-    --red2: #e02010;
-    --red-glow: rgba(192,22,11,0.12);
+    --red-2: #e02010;
+    --red-glow: rgba(192, 22, 11, 0.12);
     --cyan: #007a8c;
     --text: #2a2520;
     --text-dim: #7a756e;
     --text-bright: #1a1510;
   }
 
-  body.light-mode .grid-bg {
-    background-image:
-      linear-gradient(rgba(192,22,11,0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(192,22,11,0.06) 1px, transparent 1px);
+  /* ========== RESET ========== */
+  *, *::before, *::after { box-sizing: border-box; }
+  * { margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+
+  button {
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: none;
+    cursor: pointer;
   }
 
-  body.light-mode body::before { display: none; }
+  a { color: inherit; text-decoration: none; }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :focus-visible {
+    outline: 2px solid var(--red-2);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
 
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ========== LAYOUT ========== */
   body {
+    min-height: 100vh;
     background: var(--bg);
     color: var(--text);
-    font-family: var(--body);
-    transition: background 0.3s, color 0.3s;
-    min-height: 100vh;
+    font-family: var(--font-body);
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 0 16px 60px;
     position: relative;
     overflow-x: hidden;
+    transition: background var(--dur-med), color var(--dur-med);
   }
 
-  /* Scan-line overlay */
-  body::before {
+  .bg-grid {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--red-glow) 1px, transparent 1px),
+      linear-gradient(90deg, var(--red-glow) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.25;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  [data-theme="dark"] body::before {
     content: '';
     position: fixed;
     inset: 0;
     background: repeating-linear-gradient(
       0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,0,0,0.07) 2px,
-      rgba(0,0,0,0.07) 4px
+      transparent 0 2px,
+      rgba(0, 0, 0, 0.07) 2px 4px
     );
     pointer-events: none;
     z-index: 9999;
   }
 
-  /* Grid bg */
-  .grid-bg {
+  /* ========== HEADER ========== */
+  .site-header {
     position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(232,41,28,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(232,41,28,0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
+    top: 0;
+    right: 0;
+    z-index: 200;
+    padding: 10px 18px;
   }
 
-  /* ─── LOGO ─── */
-  .logo-wrap {
-    margin-top: 48px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-  }
-
-  .logo-ascii {
-    font-family: 'VT323', monospace;
-    font-size: clamp(13px, 2vw, 17px);
-    line-height: 1.25;
-    color: var(--red);
-    letter-spacing: 0.03em;
-    text-align: center;
-    white-space: pre;
-  }
-
-  .logo-reflection {
-    font-family: 'VT323', monospace;
-    font-size: clamp(14px, 2.4vw, 20px);
-    line-height: 1.2;
-    color: var(--red);
-    letter-spacing: 0.03em;
-    text-align: center;
-    white-space: pre;
-    opacity: 0.18;
-    transform: scaleY(-1);
-    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent 80%);
-    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent 80%);
-    margin-top: -2px;
-  }
-
-  @keyframes flicker {
-    0%,95%,100% { opacity: 1; }
-    96% { opacity: 0.85; }
-    97% { opacity: 1; }
-    98% { opacity: 0.7; }
-    99% { opacity: 1; }
-  }
-
-  .tagline {
-    font-family: 'VT323', monospace;
-    font-size: 18px;
-    color: var(--cyan);
-    letter-spacing: 0.12em;
-    margin-top: 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    opacity: 0.85;
-  }
-
-  .tagline::before,
-  .tagline::after {
-    content: '<<<';
-    color: var(--red);
-    opacity: 0.5;
-    font-size: 11px;
-  }
-  .tagline::before { content: '>>>'; }
-
-  .warn-icon {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    background: var(--red);
-    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
-    opacity: 0.9;
-    flex-shrink: 0;
-  }
-
-  /* ─── SEARCH BAR ─── */
-  .search-container {
-    margin-top: 40px;
-    width: 100%;
-    max-width: 740px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-  }
-
-  .search-bar {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    overflow: visible;
-    position: relative;
-    transition: border-color 0.2s;
-  }
-
-  .search-bar:focus-within {
-    border-color: rgba(232,41,28,0.5);
-    box-shadow: 0 0 0 3px rgba(232,41,28,0.08);
-  }
-
-  /* Module pill */
-  .module-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 14px 0 12px;
-    height: 48px;
-    border-right: 1px solid var(--border);
-    cursor: pointer;
-    white-space: nowrap;
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text-bright);
-    position: relative;
-    user-select: none;
-    flex-shrink: 0;
-    min-width: 140px;
-  }
-
-  .module-pill .module-icon {
-    font-size: 15px;
-    flex-shrink: 0;
-  }
-
-  .module-pill .module-label {
-    flex: 1;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .module-pill .caret {
-    width: 0; height: 0;
-    border-left: 4px solid transparent;
-    border-right: 4px solid transparent;
-    border-top: 5px solid var(--text-dim);
-    transition: transform 0.2s;
-    flex-shrink: 0;
-  }
-
-  .module-pill.open .caret { transform: rotate(180deg); }
-
-  /* Engine selector */
-  .engine-pill {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 12px;
-    height: 48px;
-    border-right: 1px solid var(--border);
-    cursor: pointer;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--cyan);
-    user-select: none;
-    flex-shrink: 0;
-  }
-
-  .engine-dot {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--cyan);
-    box-shadow: 0 0 6px var(--cyan);
-    flex-shrink: 0;
-  }
-
-  /* Search input */
-  .search-input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    padding: 0 14px;
-    font-family: var(--mono);
-    font-size: 14px;
-    color: var(--text-bright);
-    height: 48px;
-    caret-color: var(--red);
-  }
-
-  .search-input::placeholder { color: var(--text-dim); }
-
-  .search-btn {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: var(--text-dim);
-    transition: color 0.2s;
-    flex-shrink: 0;
-  }
-
-  .search-btn:hover { color: var(--red2); }
-
-  /* ─── PAYLOAD BADGE ─── */
-  .payload-badge {
+  .theme-toggle {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 6px 12px;
-    background: var(--red-glow);
-    border: 1px solid rgba(232,41,28,0.3);
-    border-radius: 4px;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: #ff7060;
-    animation: fadeIn 0.2s ease;
-  }
-
-  .payload-close {
-    cursor: pointer;
-    color: var(--text-dim);
-    font-size: 14px;
-    line-height: 1;
-    transition: color 0.15s;
-  }
-  .payload-close:hover { color: var(--red2); }
-
-  @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
-
-  /* ─── DROPDOWN PANELS ─── */
-  .dropdown {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    z-index: 1000;
-    min-width: 280px;
-    max-height: 480px;
-    overflow-y: auto;
-    display: none;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  }
-
-  .dropdown.open { display: block; animation: slideDown 0.18s ease; }
-
-  @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
-
-  .dropdown::-webkit-scrollbar { width: 4px; }
-  .dropdown::-webkit-scrollbar-track { background: transparent; }
-  .dropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  /* Module list */
-  .section-header {
-    padding: 10px 14px 6px;
-    font-family: var(--mono);
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .module-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    cursor: pointer;
-    transition: background 0.12s;
-    border-bottom: 1px solid rgba(37,42,56,0.5);
-  }
-
-  .module-item:hover { background: var(--surface2); }
-  .module-item.active { background: rgba(232,41,28,0.06); }
-
-  .module-item .mi-icon { font-size: 16px; flex-shrink: 0; }
-  .module-item .mi-name { flex: 1; font-family: var(--mono); font-size: 13px; color: var(--text-bright); }
-  .module-item .mi-count {
-    font-family: var(--mono);
-    font-size: 11px;
-    background: var(--surface2);
-    color: var(--text-dim);
-    border-radius: 10px;
-    padding: 2px 8px;
-    min-width: 26px;
-    text-align: center;
-  }
-
-  .module-item .mi-arrow {
-    color: var(--text-dim);
-    font-size: 12px;
-    margin-left: 2px;
-  }
-
-  /* Payload sub-panel */
-  .payload-panel {
-    display: none;
-  }
-  .payload-panel.open { display: block; }
-
-  .payload-back {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    cursor: pointer;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--cyan);
-    border-bottom: 1px solid var(--border);
-    transition: background 0.12s;
-  }
-  .payload-back:hover { background: var(--surface2); }
-
-  .payload-title {
-    padding: 8px 14px;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text-dim);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .payload-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px 14px;
-    cursor: pointer;
-    transition: background 0.12s;
-    border-bottom: 1px solid rgba(37,42,56,0.5);
-  }
-  .payload-item:hover { background: var(--surface2); }
-  .payload-item.selected { background: rgba(232,41,28,0.08); border-left: 2px solid var(--red); }
-
-  .payload-item .pi-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--text-dim);
-    margin-top: 5px;
-    flex-shrink: 0;
-  }
-
-  .payload-item.selected .pi-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
-
-  .payload-item .pi-text {
-    flex: 1;
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text);
-    line-height: 1.5;
-  }
-
-  .payload-item.selected .pi-text { color: #ff7060; }
-
-  /* ─── RESULTS AREA ─── */
-  .results-area {
-    width: 100%;
-    max-width: 740px;
-    margin-top: 28px;
-  }
-
-  .result-info {
-    font-family: var(--mono);
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-bottom: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .result-info .ri-query {
-    color: var(--cyan);
-    opacity: 0.8;
-    font-style: italic;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 400px;
-  }
-
-  .result-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 14px 18px;
-    margin-bottom: 10px;
-    transition: border-color 0.15s;
-    cursor: pointer;
-    animation: fadeIn 0.22s ease;
-  }
-
-  .result-card:hover { border-color: rgba(232,41,28,0.3); }
-
-  .result-card .rc-url {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: #3aca7c;
-    margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .result-card .rc-title {
-    font-size: 15px;
-    font-weight: 500;
-    color: #7eb8f5;
-    margin-bottom: 6px;
-    text-decoration: none;
-  }
-
-  .result-card .rc-snippet {
-    font-size: 13px;
-    color: var(--text-dim);
-    line-height: 1.6;
-  }
-
-  .result-card .rc-snippet mark {
-    background: rgba(232,41,28,0.2);
-    color: var(--red2);
-    border-radius: 2px;
-    padding: 0 2px;
-  }
-
-  /* ─── THEME TOGGLE ─── */
-  .theme-toggle {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    cursor: pointer;
     padding: 5px 14px;
     border: 1px solid var(--border);
-    border-radius: 20px;
-    font-family: 'VT323', monospace;
-    font-size: 15px;
-    color: var(--text);
+    border-radius: var(--radius-lg);
     background: var(--surface);
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-    user-select: none;
+    font-family: var(--font-mono);
+    font-size: 15px;
     letter-spacing: 0.08em;
+    color: var(--text);
+    transition: border-color var(--dur-med), color var(--dur-med);
   }
+  .theme-toggle:hover { border-color: var(--red); color: var(--text-bright); }
 
-  .theme-toggle:hover {
-    border-color: var(--red);
-    color: var(--text-bright);
-  }
+  .theme-toggle__label { transition: opacity var(--dur-med); }
+  [data-theme="dark"] .theme-toggle__label[data-for="light"] { opacity: 0.4; }
+  [data-theme="light"] .theme-toggle__label[data-for="dark"] { opacity: 0.4; }
 
-  .toggle-track {
+  .theme-toggle__track {
+    position: relative;
     width: 28px;
     height: 14px;
     border-radius: 7px;
     background: var(--border);
-    position: relative;
-    transition: background 0.25s;
-    flex-shrink: 0;
+    transition: background var(--dur-med);
   }
+  [data-theme="light"] .theme-toggle__track { background: var(--red); }
 
-  body.light-mode .toggle-track { background: var(--red); }
-
-  .toggle-thumb {
+  .theme-toggle__thumb {
     position: absolute;
     top: 2px;
     left: 2px;
@@ -558,106 +172,417 @@
     height: 10px;
     border-radius: 50%;
     background: var(--text-dim);
-    transition: left 0.25s, background 0.25s;
+    transition: left var(--dur-med), background var(--dur-med);
+  }
+  [data-theme="light"] .theme-toggle__thumb { left: 16px; background: #fff; }
+
+  /* ========== LOGO ========== */
+  .logo {
+    margin-top: 48px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+  .logo__ascii {
+    font-family: var(--font-mono);
+    font-size: clamp(13px, 2vw, 17px);
+    line-height: 1.25;
+    color: var(--red);
+    letter-spacing: 0.03em;
+    white-space: pre;
+    text-shadow: 0 0 12px var(--red-glow);
   }
 
-  body.light-mode .toggle-thumb {
-    left: 16px;
-    background: #fff;
-  }
-
-  /* Light mode scan-line removal */
-  body.light-mode::before { opacity: 0; }
-
-  /* ─── STATUS BAR ─── */
-  .status-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 28px;
-    background: rgba(13,15,20,0.95);
-    border-top: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    padding: 0 18px;
-    gap: 24px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text-dim);
-    backdrop-filter: blur(8px);
-    z-index: 100;
-  }
-
-  .status-bar .sb-item { display: flex; align-items: center; gap: 6px; }
-  .status-bar .sb-dot { width: 6px; height: 6px; border-radius: 50%; background: #3aca7c; box-shadow: 0 0 5px #3aca7c; }
-  .status-bar .sb-red { background: var(--red); box-shadow: 0 0 5px var(--red); }
-
-  /* ─── LOADING ─── */
-  .loading-bar {
-    display: none;
+  /* ========== SEARCH ========== */
+  .search {
+    margin-top: 40px;
     width: 100%;
     max-width: 740px;
-    height: 2px;
-    background: var(--border);
-    border-radius: 1px;
-    overflow: hidden;
-    margin-top: 12px;
+    position: relative;
+    z-index: 1;
   }
 
-  .loading-bar.active { display: block; }
-
-  .loading-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--red), var(--red2), var(--cyan));
-    border-radius: 1px;
-    animation: loadAnim 1.4s ease-in-out infinite;
+  .search__bar {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    position: relative;
+    transition: border-color var(--dur-med), box-shadow var(--dur-med);
+  }
+  .search__bar:focus-within {
+    border-color: var(--red);
+    box-shadow: 0 0 0 3px var(--red-glow);
   }
 
-  @keyframes loadAnim {
-    0% { width: 0; margin-left: 0; }
-    50% { width: 60%; margin-left: 20%; }
-    100% { width: 0; margin-left: 100%; }
-  }
-
-  /* ─── EMPTY STATE ─── */
-  .empty-state {
-    text-align: center;
-    padding: 48px 0;
-    color: var(--text-dim);
-    font-family: var(--mono);
+  .search__pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 48px;
+    padding: 0 14px;
+    border-right: 1px solid var(--border);
+    font-family: var(--font-mono);
     font-size: 13px;
-    line-height: 2;
+    color: var(--text-bright);
+    white-space: nowrap;
+    user-select: none;
+    transition: background var(--dur-fast);
+  }
+  .search__pill:hover { background: var(--surface-2); }
+  .search__pill--module { min-width: 180px; }
+
+  .search__pill-icon { font-size: 15px; flex-shrink: 0; }
+  .search__pill-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+  .search__pill-caret {
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--text-dim);
+    transition: transform var(--dur-med);
+  }
+  .search__pill[aria-expanded="true"] .search__pill-caret { transform: rotate(180deg); }
+
+  .search__engine { color: var(--cyan); font-size: 12px; }
+  .search__engine-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
   }
 
-  .empty-state .es-icon {
-    font-size: 32px;
-    margin-bottom: 12px;
-    opacity: 0.4;
+  .search__input {
+    flex: 1;
+    height: 48px;
+    padding: 0 14px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--text-bright);
+    caret-color: var(--red);
+    min-width: 0;
+  }
+  .search__input::placeholder { color: var(--text-dim); }
+
+  .search__submit {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    color: var(--text-dim);
+    transition: color var(--dur-med), background var(--dur-med);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+  .search__submit:hover {
+    color: var(--red-2);
+    background: var(--surface-2);
   }
 
-  /* Utility */
-  .hidden { display: none !important; }
+  /* ========== BADGE ========== */
+  .search__badge-row { margin-top: 12px; min-height: 0; }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--red-glow);
+    border: 1px solid rgba(232, 41, 28, 0.3);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--red-2);
+    animation: fadeSlide var(--dur-med) var(--ease);
+    max-width: 100%;
+  }
+  .badge__text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 500px;
+  }
+  .badge__close {
+    font-size: 14px;
+    line-height: 1;
+    color: var(--text-dim);
+    transition: color var(--dur-fast);
+    padding: 0 2px;
+  }
+  .badge__close:hover { color: var(--red-2); }
+
+  /* ========== DROPDOWN ========== */
+  .dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    min-width: 320px;
+    max-width: 420px;
+    max-height: 480px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    display: none;
+  }
+  .dropdown[data-open="true"] {
+    display: block;
+    animation: fadeSlide var(--dur-med) var(--ease);
+  }
+  .dropdown::-webkit-scrollbar { width: 4px; }
+  .dropdown::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+
+  .dropdown__section-header {
+    padding: 10px 14px 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .dropdown__item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(37, 42, 56, 0.5);
+    transition: background var(--dur-fast);
+  }
+  .dropdown__item:hover,
+  .dropdown__item[aria-selected="true"] { background: var(--surface-2); }
+
+  .dropdown__item-icon { font-size: 16px; flex-shrink: 0; }
+  .dropdown__item-name {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-bright);
+  }
+  .dropdown__item-count {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    min-width: 26px;
+    text-align: center;
+    background: var(--surface-2);
+    color: var(--text-dim);
+    border-radius: 10px;
+  }
+  .dropdown__item-arrow { color: var(--text-dim); font-size: 12px; }
+
+  /* Payload view */
+  .payload-view { display: none; }
+  .payload-view[data-open="true"] { display: block; }
+
+  .payload-view__back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--cyan);
+    border-bottom: 1px solid var(--border);
+    transition: background var(--dur-fast);
+  }
+  .payload-view__back:hover { background: var(--surface-2); }
+
+  .payload-view__title {
+    padding: 8px 14px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .payload-view__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid rgba(37, 42, 56, 0.5);
+    transition: background var(--dur-fast);
+  }
+  .payload-view__item:hover { background: var(--surface-2); }
+  .payload-view__item[aria-selected="true"] {
+    background: rgba(232, 41, 28, 0.08);
+    border-left: 2px solid var(--red);
+  }
+
+  .payload-view__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .payload-view__item[aria-selected="true"] .payload-view__dot {
+    background: var(--red);
+    box-shadow: 0 0 6px var(--red);
+  }
+
+  .payload-view__text {
+    flex: 1;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .payload-view__item[aria-selected="true"] .payload-view__text { color: var(--red-2); }
+
+  /* ========== LAST SEARCH CARD ========== */
+  .last-search {
+    width: 100%;
+    max-width: 740px;
+    margin-top: 28px;
+    position: relative;
+    z-index: 1;
+    animation: fadeSlide var(--dur-med) var(--ease);
+  }
+
+  .last-search__card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    border-radius: var(--radius-md);
+    transition: border-color var(--dur-fast), background var(--dur-fast);
+  }
+  .last-search__card:hover {
+    border-color: var(--border-strong);
+    border-left-color: var(--red-2);
+    background: var(--surface-2);
+  }
+
+  .last-search__icon {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    background: var(--red-glow);
+    border-radius: 50%;
+    color: var(--red-2);
+    flex-shrink: 0;
+  }
+
+  .last-search__body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .last-search__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .last-search__label-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 6px var(--green);
+  }
+
+  .last-search__query {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--text-bright);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .last-search__meta {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .last-search__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--red);
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+    transition: background var(--dur-fast);
+    flex-shrink: 0;
+  }
+  .last-search__link:hover { background: var(--red-2); }
+
+  /* ========== ANIMATIONS ========== */
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========== UTIL ========== */
+  .is-hidden { display: none !important; }
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ========== RESPONSIVE ========== */
+  @media (max-width: 640px) {
+    .search__pill--module { min-width: 140px; }
+    .search__pill--engine { display: none; }
+    .dropdown { min-width: 280px; max-width: calc(100vw - 32px); }
+    .last-search__card { flex-wrap: wrap; }
+    .last-search__link { width: 100%; justify-content: center; }
+  }
 </style>
 </head>
 <body>
 
-<div class="grid-bg"></div>
+<div class="bg-grid" aria-hidden="true"></div>
 
-<!-- ─── TOP BAR ─── -->
-<div style="position:fixed;top:0;right:0;z-index:200;padding:10px 18px;display:flex;align-items:center;">
-  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
-    <span id="themeLabel" style="font-family:'VT323',monospace;font-size:15px;letter-spacing:0.08em;">DARK</span>
-    <div class="toggle-track"><div class="toggle-thumb"></div></div>
-    <span id="themeLabelRight" style="font-family:'VT323',monospace;font-size:15px;letter-spacing:0.08em;opacity:0.4;">LIGHT</span>
+<!-- ========== HEADER ========== -->
+<header class="site-header">
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">
+    <span class="theme-toggle__label" data-for="dark">DARK</span>
+    <span class="theme-toggle__track"><span class="theme-toggle__thumb"></span></span>
+    <span class="theme-toggle__label" data-for="light">LIGHT</span>
   </button>
-</div>
+</header>
 
-<!-- ─── LOGO ─── -->
-<div class="logo-wrap">
-  <pre class="logo-ascii"> 
-
-    
+<!-- ========== LOGO ========== -->
+<section class="logo" aria-label="GoDork">
+  <pre class="logo__ascii" aria-hidden="true">
   ▄████   █████   █████▄   █████   ██▀███   ██ ▄█▀
  ██  ▀█  ██   ██  ██   █▌ ██   ██  ██   ██  ██▄█
  ██ ▄▄▄  ██   ██  ██   █▌ ██   ██  ██  ▄█   ███▄ 
@@ -669,527 +594,545 @@
                   ░
           Google Dorking Framework   
  &gt;&gt;&gt;  ⚠️  Find what they forgot to hide...  &lt;&lt;&lt;</pre>
-</div>
+  <h1 class="sr-only">GoDork — Google Dorking Framework</h1>
+</section>
 
-<!-- ─── SEARCH BAR ─── -->
-<div class="search-container">
-  <div class="search-bar" id="searchBar">
+<!-- ========== SEARCH ========== -->
+<main class="search" role="search">
+  <div class="search__bar" id="searchBar">
 
-    <!-- Module selector -->
-    <div class="module-pill" id="modulePill" onclick="toggleModuleDropdown()">
-      <span class="module-icon" id="modulePillIcon">☰</span>
-      <span class="module-label" id="modulePillLabel">Select Module</span>
-      <span class="caret" id="moduleCaret"></span>
+    <button
+      class="search__pill search__pill--module"
+      id="modulePill"
+      type="button"
+      aria-haspopup="listbox"
+      aria-expanded="false"
+      aria-controls="moduleDropdown"
+    >
+      <span class="search__pill-icon" id="modulePillIcon">☰</span>
+      <span class="search__pill-label" id="modulePillLabel">Select Module</span>
+      <span class="search__pill-caret" aria-hidden="true"></span>
+    </button>
+
+    <div class="search__pill search__pill--engine" aria-label="Search engine: Google">
+      <span class="search__engine-dot" aria-hidden="true"></span>
+      <span class="search__engine">Google</span>
     </div>
 
-    <!-- Engine -->
-    <div class="engine-pill">
-      <span class="engine-dot"></span>
-      Google
-    </div>
-
-    <!-- Input -->
+    <label for="searchInput" class="sr-only">Search query</label>
     <input
-      class="search-input"
+      class="search__input"
       id="searchInput"
-      type="text"
+      type="search"
       placeholder="Search and find anything..."
-      onkeydown="handleKey(event)"
-    />
+      autocomplete="off"
+      spellcheck="false"
+    >
 
-    <!-- Search btn -->
-    <button class="search-btn" onclick="runSearch()" title="Search">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <button class="search__submit" id="searchSubmit" type="button" aria-label="Run search on Google">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
       </svg>
     </button>
 
-    <!-- Module dropdown -->
-    <div class="dropdown" id="moduleDropdown">
-      <div id="moduleListView">
-        <!-- filled by JS -->
-      </div>
-      <div class="payload-panel" id="payloadPanel">
-        <div class="payload-back" onclick="backToModules()">
-          ← back to modules
-        </div>
-        <div class="payload-title" id="payloadPanelTitle">SELECT PAYLOAD</div>
+    <div class="dropdown" id="moduleDropdown" role="dialog" aria-label="Select module and payload">
+      <div id="moduleListView" role="listbox" aria-label="Modules"></div>
+      <div class="payload-view" id="payloadView" role="listbox" aria-label="Payloads">
+        <button class="payload-view__back" id="backToModules" type="button">← back to modules</button>
+        <div class="payload-view__title" id="payloadViewTitle">SELECT PAYLOAD</div>
         <div id="payloadList"></div>
       </div>
     </div>
-
   </div>
 
-  <!-- Selected payload badge -->
-  <div id="payloadBadge" class="hidden">
-    <span class="payload-badge">
-      <span id="payloadBadgeText"></span>
-      <span class="payload-close" onclick="clearPayload()">✕</span>
-    </span>
-  </div>
+  <div class="search__badge-row" id="badgeRow" aria-live="polite"></div>
+</main>
 
-  <!-- Loading bar -->
-  <div class="loading-bar" id="loadingBar">
-    <div class="loading-fill"></div>
-  </div>
-</div>
-
-<!-- ─── RESULTS ─── -->
-<div class="results-area" id="resultsArea"></div>
-
-<!-- ─── STATUS BAR ─── -->
-<div class="status-bar">
-</div>
+<!-- ========== LAST SEARCH ========== -->
+<section class="last-search is-hidden" id="lastSearch" aria-live="polite" aria-label="Last search"></section>
 
 <script>
-// ─── DATA ───
-const MODULES = [
-  {
-    section: "PASSWORDS",
-    items: [
-      {
-        icon: "🔐", name: "admin / panels", count: 18,
-        payloads: [
-          'intitle:"admin panel" inurl:admin',
-          'intitle:"login" inurl:/admin/login',
-          'inurl:"/wp-admin/admin-ajax.php"',
-          'inurl:cpanel filetype:php',
-          'intitle:"phpMyAdmin" inurl:phpmyadmin',
-          'inurl:admin intitle:"dashboard" filetype:php',
-          'inurl:"/admin/login.php" intitle:"admin"',
-          'inurl:"admin.aspx" OR inurl:"admin.asp"',
-          'intext:"admin" intitle:"login" inurl:controlpanel',
-          'inurl:"manager/html" intitle:"Apache Tomcat"',
-          'inurl:8080/manager/html',
-          'intitle:"Webmin" inurl:10000',
-          'inurl:"/plesk/client.php"',
-          'inurl:"/directadmin" intitle:"DirectAdmin"',
-          'filetype:php inurl:admin intext:"username" intext:"password"',
-          'inurl:"/admin/config.php"',
-          'intitle:"cPanel" inurl:2082 OR inurl:2083',
-          'inurl:"whm" intitle:"WHM Login"'
-        ]
-      },
-      {
-        icon: "⭐", name: "env / secrets", count: 13,
-        payloads: [
-          'filetype:env intext:"APP_KEY"',
-          'filetype:env intext:"DB_PASSWORD"',
-          'inurl:".env" intext:"SECRET"',
-          'filetype:env intext:"AWS_SECRET_ACCESS_KEY"',
-          'filetype:env intext:"MAIL_PASSWORD"',
-          'inurl:".env.example" intext:"password"',
-          'filetype:env intext:"STRIPE_SECRET"',
-          'inurl:".env" intext:"SENDGRID_API_KEY"',
-          'filetype:env intext:"TWILIO_AUTH_TOKEN"',
-          'filetype:env intext:"GOOGLE_API_KEY"',
-          'inurl:".env" intext:"JWT_SECRET"',
-          'filetype:env intext:"PRIVATE_KEY"',
-          'inurl:".env" intext:"OAUTH_SECRET"'
-        ]
-      },
-      {
-        icon: "🔑", name: "passwords / files", count: 13,
-        payloads: [
-          'filetype:txt intext:"password" inurl:ftp',
-          'filetype:log intext:"password"',
-          'filetype:xls intext:"username" intext:"password"',
-          'filetype:csv intext:"password"',
-          'inurl:wp-config.php intext:"DB_PASSWORD"',
-          'filetype:sql intext:"INSERT INTO" intext:"password"',
-          'filetype:ini intext:"password"',
-          'inurl:config.php intext:"password"',
-          'filetype:bak intext:"password"',
-          'inurl:htpasswd filetype:htpasswd',
-          'filetype:txt inurl:passwords',
-          'intext:"password" filetype:xls site:*.edu',
-          'filetype:pem intext:"PRIVATE KEY"'
-        ]
-      }
-    ]
-  },
-  {
-    section: "DATABASE",
-    items: [
-      {
-        icon: "🗄️", name: "database / exposed", count: 18,
-        payloads: [
-          'inurl:phpmyadmin/index.php',
-          'intext:"phpMyAdmin" intitle:"Welcome to phpMyAdmin"',
-          'inurl:adminer.php',
-          'filetype:sql intext:"CREATE TABLE"',
-          'inurl:"db.php" filetype:php intext:"mysql_connect"',
-          'intext:"MongoDB" intitle:"RoboMongo"',
-          'inurl:8081 intitle:"Adminer"',
-          'inurl:5984/_utils/ intitle:"CouchDB"',
-          'inurl:9200/_cat/indices',
-          'intitle:"Kibana" inurl:5601',
-          'inurl:8086/query intitle:"InfluxDB"',
-          'inurl:6379 intitle:"Redis"',
-          'inurl:27017 intitle:"MongoDB"',
-          'intext:"postgresql" filetype:log',
-          'filetype:mdb inurl:*.mdb',
-          'inurl:"config/database.yml" intext:"password"',
-          'filetype:properties intext:"jdbc:mysql"',
-          'inurl:"database.php" intext:"mysql_pconnect"'
-        ]
-      },
-      {
-        icon: "⚙️", name: "config / files", count: 16,
-        payloads: [
-          'filetype:xml inurl:config intext:"password"',
-          'filetype:cfg intext:"password"',
-          'inurl:config.yml intext:"password"',
-          'filetype:json inurl:settings intext:"secret"',
-          'inurl:"application.properties" intext:"password"',
-          'filetype:conf intext:"password"',
-          'inurl:"settings.py" intext:"SECRET_KEY"',
-          'filetype:xml intext:"connectionString"',
-          'inurl:"config.json" intext:"api_key"',
-          'filetype:properties intext:"password"',
-          'inurl:"web.config" intext:"password"',
-          'filetype:yaml intext:"password"',
-          'inurl:".htaccess" intext:"AuthUserFile"',
-          'filetype:ini inurl:config intext:"host"',
-          'inurl:"app.config" intext:"password"',
-          'filetype:xml inurl:hibernate intext:"password"'
-        ]
-      }
-    ]
-  },
-  {
-    section: "SENSITIVE",
-    items: [
-      {
-        icon: "📁", name: "sensitive / dirs", count: 17,
-        payloads: [
-          'intitle:"Index of" inurl:backup',
-          'intitle:"Index of" inurl:secret',
-          'intitle:"Index of" passwd',
-          'intitle:"Index of" inurl:private',
-          'intitle:"Index of" inurl:upload',
-          'intitle:"Index of" inurl:.git',
-          'intitle:"Index of" inurl:.svn',
-          'intitle:"Index of" inurl:logs',
-          'intitle:"Index of" ".bash_history"',
-          'intitle:"Index of" ".ssh"',
-          'intitle:"Index of" "wp-content/uploads"',
-          'intitle:"Index of" inurl:tmp',
-          'intitle:"Index of" inurl:cache',
-          'intitle:"Index of" "server.key"',
-          'intitle:"Index of" inurl:dump',
-          'intitle:"Index of" ".env"',
-          'intitle:"Index of" inurl:credentials'
-        ]
-      },
-      {
-        icon: "👤", name: "usernames / accounts", count: 14,
-        payloads: [
-          'intext:"username" filetype:log',
-          'filetype:sql intext:"INSERT INTO users"',
-          'intext:"email" intext:"password" filetype:txt',
-          'filetype:csv intext:"email" intext:"username"',
-          'inurl:"/etc/passwd" intitle:"Index of"',
-          'filetype:log intext:"user login"',
-          'intext:"registered users" filetype:txt',
-          'filetype:xls intext:"first name" intext:"last name" intext:"email"',
-          'intext:"user_name" intext:"user_pass" filetype:sql',
-          'inurl:listusers filetype:php',
-          'intext:"mail" "passw" filetype:xls',
-          'filetype:csv intext:"ssn" OR intext:"social security"',
-          'filetype:xls intext:"credit card" OR intext:"card number"',
-          'intext:"login" filetype:log'
-        ]
-      }
-    ]
-  },
-  {
-    section: "CLOUD",
-    items: [
-      {
-        icon: "🔑", name: "api / keys", count: 17,
-        payloads: [
-          'intext:"api_key" filetype:json',
-          'intext:"client_secret" filetype:json',
-          'inurl:".travis.yml" intext:"api_key"',
-          'inurl:"Dockerfile" intext:"AWS_SECRET"',
-          'intext:"AKIA" filetype:txt',
-          'inurl:".npmrc" intext:"_authToken"',
-          'inurl:".gitconfig" intext:"token"',
-          'filetype:json intext:"type" intext:"service_account"',
-          'intext:"firebase" intext:"apiKey" filetype:js',
-          'intext:"azure_client_secret" filetype:yml',
-          'inurl:"credentials" filetype:json intext:"aws"',
-          'intext:"heroku_api_key" filetype:json',
-          'intext:"MAILCHIMP_API_KEY" filetype:env',
-          'intext:"slack_token" filetype:json',
-          'intext:"github_token" filetype:yml',
-          'inurl:".boto" intext:"aws_secret_access_key"',
-          'intext:"BEGIN RSA PRIVATE KEY" filetype:pem'
-        ]
-      }
-    ]
-  },
-  {
-    section: "SERVER",
-    items: [
-      {
-        icon: "🖥️", name: "server / info", count: 13,
-        payloads: [
-          'intitle:"Apache Status" inurl:server-status',
-          'intitle:"Apache2 Ubuntu Default Page"',
-          'intitle:"nginx" intext:"Welcome to nginx"',
-          'intitle:"IIS Windows Server"',
-          'inurl:phpinfo.php intitle:"phpinfo()"',
-          'intitle:"Test Page for the Apache HTTP Server"',
-          'intitle:"Welcome to OpenResty!"',
-          'inurl:server-info intitle:"Apache Server Information"',
-          'intitle:"Tomcat" inurl:8080',
-          'inurl:"wp-login.php" intitle:"WordPress"',
-          'intitle:"Drupal" inurl:user/login',
-          'intitle:"Joomla" inurl:administrator',
-          'intitle:"XAMPP" inurl:dashboard'
-        ]
-      },
-      {
-        icon: "🛡️", name: "vuln / files", count: 15,
-        payloads: [
-          'inurl:".git/HEAD" intitle:"Index of"',
-          'inurl:".svn/entries"',
-          'inurl:"WEB-INF/web.xml"',
-          'inurl:backup filetype:sql',
-          'inurl:install.php intitle:"WordPress Installation"',
-          'inurl:phpshell.php',
-          'inurl:c99.php OR inurl:r57.php',
-          'filetype:php intext:"eval(base64_decode"',
-          'inurl:shell.php',
-          'inurl:"upload.php" intext:"file upload"',
-          'inurl:"/cgi-bin/" filetype:sh',
-          'intitle:"Test Page" filetype:php',
-          'inurl:"/proc/self/environ"',
-          'inurl:config.bak OR inurl:config.old',
-          'inurl:".DS_Store" intitle:"Index of"'
-        ]
-      }
-    ]
-  }
-];
+'use strict';
 
-// ─── STATE ───
-let selectedModule = null;
-let selectedPayload = null;
-let dropdownOpen = false;
-let showingPayloads = false;
+(() => {
 
-// ─── INIT ───
-function buildModuleList() {
-  const container = document.getElementById('moduleListView');
-  let html = '';
-  MODULES.forEach(group => {
-    html += `<div class="section-header">${group.section}</div>`;
-    group.items.forEach(mod => {
-      html += `
-        <div class="module-item" onclick="selectModule('${escape(mod.name)}')">
-          <span class="mi-icon">${mod.icon}</span>
-          <span class="mi-name">${mod.name}</span>
-          <span class="mi-count">${mod.count}</span>
-          <span class="mi-arrow">›</span>
-        </div>`;
-    });
-  });
-  container.innerHTML = html;
-}
-
-buildModuleList();
-
-// ─── MODULE DROPDOWN ───
-function toggleModuleDropdown() {
-  dropdownOpen = !dropdownOpen;
-  const dd = document.getElementById('moduleDropdown');
-  const caret = document.getElementById('moduleCaret');
-  const pill = document.getElementById('modulePill');
-
-  if (dropdownOpen) {
-    dd.classList.add('open');
-    pill.classList.add('open');
-    showModuleList();
-  } else {
-    dd.classList.remove('open');
-    pill.classList.remove('open');
-  }
-}
-
-function closeDropdown() {
-  dropdownOpen = false;
-  document.getElementById('moduleDropdown').classList.remove('open');
-  document.getElementById('modulePill').classList.remove('open');
-}
-
-// Close on outside click
-document.addEventListener('click', function(e) {
-  if (!document.getElementById('searchBar').contains(e.target)) {
-    closeDropdown();
-  }
-});
-
-// ─── MODULE SELECT → SHOW PAYLOADS ───
-function selectModule(name) {
-  const modName = unescape(name);
-  let found = null;
-  MODULES.forEach(g => g.items.forEach(m => { if (m.name === modName) found = m; }));
-  if (!found) return;
-
-  selectedModule = found;
-  document.getElementById('modulePillIcon').textContent = found.icon;
-  document.getElementById('modulePillLabel').textContent = found.name;
-
-  showPayloadPanel(found);
-}
-
-function showPayloadPanel(mod) {
-  showingPayloads = true;
-  document.getElementById('moduleListView').classList.add('hidden');
-  const panel = document.getElementById('payloadPanel');
-  panel.classList.add('open');
-  document.getElementById('payloadPanelTitle').textContent = mod.name.toUpperCase() + ' — SELECT PAYLOAD';
-
-  let html = '';
-  mod.payloads.forEach((p, i) => {
-    const isSelected = selectedPayload === p;
-    html += `
-      <div class="payload-item ${isSelected ? 'selected' : ''}" onclick="pickPayload(${i})">
-        <div class="pi-dot"></div>
-        <div class="pi-text">${escapeHtml(p)}</div>
-      </div>`;
-  });
-  document.getElementById('payloadList').innerHTML = html;
-}
-
-function backToModules() {
-  showingPayloads = false;
-  document.getElementById('moduleListView').classList.remove('hidden');
-  document.getElementById('payloadPanel').classList.remove('open');
-}
-
-function showModuleList() {
-  showingPayloads = false;
-  document.getElementById('moduleListView').classList.remove('hidden');
-  document.getElementById('payloadPanel').classList.remove('open');
-}
-
-// ─── PAYLOAD PICK ───
-function pickPayload(idx) {
-  if (!selectedModule) return;
-  selectedPayload = selectedModule.payloads[idx];
-
-  document.getElementById('payloadBadgeText').textContent = selectedPayload;
-  document.getElementById('payloadBadge').classList.remove('hidden');
-  document.getElementById('searchInput').value = selectedPayload;
-  document.getElementById('searchInput').focus();
-
-  closeDropdown();
-  updateStatus('Payload selected — hit Enter to search');
-}
-
-function clearPayload() {
-  selectedPayload = null;
-  document.getElementById('payloadBadge').classList.add('hidden');
-  document.getElementById('searchInput').value = '';
-  updateStatus('Ready');
-}
-
-// ─── SEARCH ───
-function handleKey(e) {
-  if (e.key === 'Enter') runSearch();
-}
-
-function runSearch() {
-  const q = document.getElementById('searchInput').value.trim();
-  if (!q) return;
-
-  const lb = document.getElementById('loadingBar');
-  lb.classList.add('active');
-  updateStatus('Searching...');
-
-  setTimeout(() => {
-    lb.classList.remove('active');
-    showResults(q);
-    updateStatus('Search complete');
-  }, 900);
-}
-
-function showResults(query) {
-  const area = document.getElementById('resultsArea');
-
-  const mockResults = [
-    {
-      url: 'http://target-site.example.com/admin/login.php',
-      title: 'Admin Panel – Login',
-      snippet: `Found via dork: <mark>${escapeHtml(query.slice(0,40))}</mark>. This page exposes an administrative login interface without rate limiting or CAPTCHA protection.`
-    },
-    {
-      url: 'ftp://backup.example-corp.com/private/passwords.txt',
-      title: 'passwords.txt – Exposed via FTP',
-      snippet: `Directory listing enabled. File contains plaintext credentials matching the dork pattern <mark>${escapeHtml(query.slice(0,30))}</mark>.`
-    },
-    {
-      url: 'https://dev.company.io/.env',
-      title: '.env – Environment File Exposed',
-      snippet: `Sensitive configuration file accessible without auth. Keys visible: APP_KEY, DB_PASSWORD, <mark>AWS_SECRET_ACCESS_KEY</mark>.`
-    },
-    {
-      url: 'https://vulnerable-app.io/phpinfo.php',
-      title: 'phpinfo() – Server Information Disclosure',
-      snippet: `Full PHP configuration exposed. Server: Apache/2.4.41. OS: Linux. Matched dork: <mark>${escapeHtml(query.slice(0,25))}</mark>.`
-    },
-    {
-      url: 'https://api.leaked-corp.com/v1/config.json',
-      title: 'config.json – API Keys Exposed',
-      snippet: `Public JSON endpoint contains <mark>api_key</mark>, client_secret and bearer token. No authentication required to access.`
-    }
+  // ─── DATA ──────────────────────────────────────────────────────────────
+  const MODULES = [
+    { section: 'PASSWORDS', items: [
+      { icon: '🔐', name: 'admin / panels', payloads: [
+        'intitle:"admin panel" inurl:admin',
+        'intitle:"login" inurl:/admin/login',
+        'inurl:"/wp-admin/admin-ajax.php"',
+        'inurl:cpanel filetype:php',
+        'intitle:"phpMyAdmin" inurl:phpmyadmin',
+        'inurl:admin intitle:"dashboard" filetype:php',
+        'inurl:"/admin/login.php" intitle:"admin"',
+        'inurl:"admin.aspx" OR inurl:"admin.asp"',
+        'intext:"admin" intitle:"login" inurl:controlpanel',
+        'inurl:"manager/html" intitle:"Apache Tomcat"',
+        'inurl:8080/manager/html',
+        'intitle:"Webmin" inurl:10000',
+        'inurl:"/plesk/client.php"',
+        'inurl:"/directadmin" intitle:"DirectAdmin"',
+        'filetype:php inurl:admin intext:"username" intext:"password"',
+        'inurl:"/admin/config.php"',
+        'intitle:"cPanel" inurl:2082 OR inurl:2083',
+        'inurl:"whm" intitle:"WHM Login"'
+      ]},
+      { icon: '⭐', name: 'env / secrets', payloads: [
+        'filetype:env intext:"APP_KEY"',
+        'filetype:env intext:"DB_PASSWORD"',
+        'inurl:".env" intext:"SECRET"',
+        'filetype:env intext:"AWS_SECRET_ACCESS_KEY"',
+        'filetype:env intext:"MAIL_PASSWORD"',
+        'inurl:".env.example" intext:"password"',
+        'filetype:env intext:"STRIPE_SECRET"',
+        'inurl:".env" intext:"SENDGRID_API_KEY"',
+        'filetype:env intext:"TWILIO_AUTH_TOKEN"',
+        'filetype:env intext:"GOOGLE_API_KEY"',
+        'inurl:".env" intext:"JWT_SECRET"',
+        'filetype:env intext:"PRIVATE_KEY"',
+        'inurl:".env" intext:"OAUTH_SECRET"'
+      ]},
+      { icon: '🔑', name: 'passwords / files', payloads: [
+        'filetype:txt intext:"password" inurl:ftp',
+        'filetype:log intext:"password"',
+        'filetype:xls intext:"username" intext:"password"',
+        'filetype:csv intext:"password"',
+        'inurl:wp-config.php intext:"DB_PASSWORD"',
+        'filetype:sql intext:"INSERT INTO" intext:"password"',
+        'filetype:ini intext:"password"',
+        'inurl:config.php intext:"password"',
+        'filetype:bak intext:"password"',
+        'inurl:htpasswd filetype:htpasswd',
+        'filetype:txt inurl:passwords',
+        'intext:"password" filetype:xls site:*.edu',
+        'filetype:pem intext:"PRIVATE KEY"'
+      ]}
+    ]},
+    { section: 'DATABASE', items: [
+      { icon: '🗄️', name: 'database / exposed', payloads: [
+        'inurl:phpmyadmin/index.php',
+        'intext:"phpMyAdmin" intitle:"Welcome to phpMyAdmin"',
+        'inurl:adminer.php',
+        'filetype:sql intext:"CREATE TABLE"',
+        'inurl:"db.php" filetype:php intext:"mysql_connect"',
+        'intext:"MongoDB" intitle:"RoboMongo"',
+        'inurl:8081 intitle:"Adminer"',
+        'inurl:5984/_utils/ intitle:"CouchDB"',
+        'inurl:9200/_cat/indices',
+        'intitle:"Kibana" inurl:5601',
+        'inurl:8086/query intitle:"InfluxDB"',
+        'inurl:6379 intitle:"Redis"',
+        'inurl:27017 intitle:"MongoDB"',
+        'intext:"postgresql" filetype:log',
+        'filetype:mdb inurl:*.mdb',
+        'inurl:"config/database.yml" intext:"password"',
+        'filetype:properties intext:"jdbc:mysql"',
+        'inurl:"database.php" intext:"mysql_pconnect"'
+      ]},
+      { icon: '⚙️', name: 'config / files', payloads: [
+        'filetype:xml inurl:config intext:"password"',
+        'filetype:cfg intext:"password"',
+        'inurl:config.yml intext:"password"',
+        'filetype:json inurl:settings intext:"secret"',
+        'inurl:"application.properties" intext:"password"',
+        'filetype:conf intext:"password"',
+        'inurl:"settings.py" intext:"SECRET_KEY"',
+        'filetype:xml intext:"connectionString"',
+        'inurl:"config.json" intext:"api_key"',
+        'filetype:properties intext:"password"',
+        'inurl:"web.config" intext:"password"',
+        'filetype:yaml intext:"password"',
+        'inurl:".htaccess" intext:"AuthUserFile"',
+        'filetype:ini inurl:config intext:"host"',
+        'inurl:"app.config" intext:"password"',
+        'filetype:xml inurl:hibernate intext:"password"'
+      ]}
+    ]},
+    { section: 'SENSITIVE', items: [
+      { icon: '📁', name: 'sensitive / dirs', payloads: [
+        'intitle:"Index of" inurl:backup',
+        'intitle:"Index of" inurl:secret',
+        'intitle:"Index of" passwd',
+        'intitle:"Index of" inurl:private',
+        'intitle:"Index of" inurl:upload',
+        'intitle:"Index of" inurl:.git',
+        'intitle:"Index of" inurl:.svn',
+        'intitle:"Index of" inurl:logs',
+        'intitle:"Index of" ".bash_history"',
+        'intitle:"Index of" ".ssh"',
+        'intitle:"Index of" "wp-content/uploads"',
+        'intitle:"Index of" inurl:tmp',
+        'intitle:"Index of" inurl:cache',
+        'intitle:"Index of" "server.key"',
+        'intitle:"Index of" inurl:dump',
+        'intitle:"Index of" ".env"',
+        'intitle:"Index of" inurl:credentials'
+      ]},
+      { icon: '👤', name: 'usernames / accounts', payloads: [
+        'intext:"username" filetype:log',
+        'filetype:sql intext:"INSERT INTO users"',
+        'intext:"email" intext:"password" filetype:txt',
+        'filetype:csv intext:"email" intext:"username"',
+        'inurl:"/etc/passwd" intitle:"Index of"',
+        'filetype:log intext:"user login"',
+        'intext:"registered users" filetype:txt',
+        'filetype:xls intext:"first name" intext:"last name" intext:"email"',
+        'intext:"user_name" intext:"user_pass" filetype:sql',
+        'inurl:listusers filetype:php',
+        'intext:"mail" "passw" filetype:xls',
+        'filetype:csv intext:"ssn" OR intext:"social security"',
+        'filetype:xls intext:"credit card" OR intext:"card number"',
+        'intext:"login" filetype:log'
+      ]}
+    ]},
+    { section: 'CLOUD', items: [
+      { icon: '🔑', name: 'api / keys', payloads: [
+        'intext:"api_key" filetype:json',
+        'intext:"client_secret" filetype:json',
+        'inurl:".travis.yml" intext:"api_key"',
+        'inurl:"Dockerfile" intext:"AWS_SECRET"',
+        'intext:"AKIA" filetype:txt',
+        'inurl:".npmrc" intext:"_authToken"',
+        'inurl:".gitconfig" intext:"token"',
+        'filetype:json intext:"type" intext:"service_account"',
+        'intext:"firebase" intext:"apiKey" filetype:js',
+        'intext:"azure_client_secret" filetype:yml',
+        'inurl:"credentials" filetype:json intext:"aws"',
+        'intext:"heroku_api_key" filetype:json',
+        'intext:"MAILCHIMP_API_KEY" filetype:env',
+        'intext:"slack_token" filetype:json',
+        'intext:"github_token" filetype:yml',
+        'inurl:".boto" intext:"aws_secret_access_key"',
+        'intext:"BEGIN RSA PRIVATE KEY" filetype:pem'
+      ]}
+    ]},
+    { section: 'SERVER', items: [
+      { icon: '🖥️', name: 'server / info', payloads: [
+        'intitle:"Apache Status" inurl:server-status',
+        'intitle:"Apache2 Ubuntu Default Page"',
+        'intitle:"nginx" intext:"Welcome to nginx"',
+        'intitle:"IIS Windows Server"',
+        'inurl:phpinfo.php intitle:"phpinfo()"',
+        'intitle:"Test Page for the Apache HTTP Server"',
+        'intitle:"Welcome to OpenResty!"',
+        'inurl:server-info intitle:"Apache Server Information"',
+        'intitle:"Tomcat" inurl:8080',
+        'inurl:"wp-login.php" intitle:"WordPress"',
+        'intitle:"Drupal" inurl:user/login',
+        'intitle:"Joomla" inurl:administrator',
+        'intitle:"XAMPP" inurl:dashboard'
+      ]},
+      { icon: '🛡️', name: 'vuln / files', payloads: [
+        'inurl:".git/HEAD" intitle:"Index of"',
+        'inurl:".svn/entries"',
+        'inurl:"WEB-INF/web.xml"',
+        'inurl:backup filetype:sql',
+        'inurl:install.php intitle:"WordPress Installation"',
+        'inurl:phpshell.php',
+        'inurl:c99.php OR inurl:r57.php',
+        'filetype:php intext:"eval(base64_decode"',
+        'inurl:shell.php',
+        'inurl:"upload.php" intext:"file upload"',
+        'inurl:"/cgi-bin/" filetype:sh',
+        'intitle:"Test Page" filetype:php',
+        'inurl:"/proc/self/environ"',
+        'inurl:config.bak OR inurl:config.old',
+        'inurl:".DS_Store" intitle:"Index of"'
+      ]}
+    ]}
   ];
 
-  let html = `
-    <div class="result-info">
-      <span>About 1,240 results for</span>
-      <span class="ri-query">${escapeHtml(query)}</span>
-    </div>`;
+  const SEARCH_URL = 'https://www.google.com/search?q=';
+  const THEME_KEY  = 'godork-theme';
 
-  mockResults.forEach(r => {
-    html += `
-      <div class="result-card" onclick="openLink('${r.url}')">
-        <div class="rc-url">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-          ${escapeHtml(r.url)}
-        </div>
-        <div class="rc-title">${escapeHtml(r.title)}</div>
-        <div class="rc-snippet">${r.snippet}</div>
-      </div>`;
-  });
+  // ─── DOM REFS ───────────────────────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+  const refs = {
+    root:             document.documentElement,
+    themeToggle:      $('themeToggle'),
+    searchBar:        $('searchBar'),
+    modulePill:       $('modulePill'),
+    modulePillIcon:   $('modulePillIcon'),
+    modulePillLabel:  $('modulePillLabel'),
+    searchInput:      $('searchInput'),
+    searchSubmit:     $('searchSubmit'),
+    dropdown:         $('moduleDropdown'),
+    moduleListView:   $('moduleListView'),
+    payloadView:      $('payloadView'),
+    payloadViewTitle: $('payloadViewTitle'),
+    payloadList:      $('payloadList'),
+    backToModules:    $('backToModules'),
+    badgeRow:         $('badgeRow'),
+    lastSearch:       $('lastSearch'),
+  };
 
-  area.innerHTML = html;
-}
+  // ─── STATE ──────────────────────────────────────────────────────────────
+  const state = {
+    dropdownOpen: false,
+    selectedModule: null,
+    selectedPayload: null,
+  };
 
-// ─── THEME TOGGLE ───
-function toggleTheme() {
-  document.body.classList.toggle('light-mode');
-  const isLight = document.body.classList.contains('light-mode');
-  document.getElementById('themeLabel').style.opacity = isLight ? '0.4' : '1';
-  document.getElementById('themeLabelRight').style.opacity = isLight ? '1' : '0.4';
-}
+  // ─── UTILS ──────────────────────────────────────────────────────────────
+  const escapeHtml = (s) =>
+    String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
 
-// ─── HELPERS ───
-function updateStatus(msg) {
-  const el = document.getElementById('sbStatus');
-  if (el) el.textContent = msg;
-}
+  const buildSearchUrl = (q) => SEARCH_URL + encodeURIComponent(q);
 
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+  const findModule = (name) => {
+    for (const g of MODULES) {
+      const m = g.items.find((x) => x.name === name);
+      if (m) return m;
+    }
+    return null;
+  };
 
-function escape(s) { return encodeURIComponent(s); }
-function unescape(s) { return decodeURIComponent(s); }
+  // ─── RENDER: Modules ────────────────────────────────────────────────────
+  function renderModules() {
+    refs.moduleListView.innerHTML = MODULES.map((group) => `
+      <div class="dropdown__section-header">${escapeHtml(group.section)}</div>
+      ${group.items.map((mod) => `
+        <button
+          class="dropdown__item"
+          type="button"
+          role="option"
+          data-action="select-module"
+          data-module="${escapeHtml(mod.name)}"
+        >
+          <span class="dropdown__item-icon">${mod.icon}</span>
+          <span class="dropdown__item-name">${escapeHtml(mod.name)}</span>
+          <span class="dropdown__item-count">${mod.payloads.length}</span>
+          <span class="dropdown__item-arrow" aria-hidden="true">›</span>
+        </button>
+      `).join('')}
+    `).join('');
+  }
+
+  // ─── RENDER: Payloads ───────────────────────────────────────────────────
+  function renderPayloads(mod) {
+    refs.payloadViewTitle.textContent = `${mod.name.toUpperCase()} — SELECT PAYLOAD`;
+    refs.payloadList.innerHTML = mod.payloads.map((p, i) => `
+      <button
+        class="payload-view__item"
+        type="button"
+        role="option"
+        data-action="select-payload"
+        data-index="${i}"
+        aria-selected="${state.selectedPayload === p ? 'true' : 'false'}"
+      >
+        <span class="payload-view__dot" aria-hidden="true"></span>
+        <span class="payload-view__text">${escapeHtml(p)}</span>
+      </button>
+    `).join('');
+  }
+
+  // ─── DROPDOWN CONTROL ───────────────────────────────────────────────────
+  function openDropdown() {
+    state.dropdownOpen = true;
+    refs.dropdown.dataset.open = 'true';
+    refs.modulePill.setAttribute('aria-expanded', 'true');
+    showModuleView();
+  }
+  function closeDropdown() {
+    state.dropdownOpen = false;
+    refs.dropdown.dataset.open = 'false';
+    refs.modulePill.setAttribute('aria-expanded', 'false');
+  }
+  function toggleDropdown() {
+    state.dropdownOpen ? closeDropdown() : openDropdown();
+  }
+  function showModuleView() {
+    refs.moduleListView.classList.remove('is-hidden');
+    refs.payloadView.dataset.open = 'false';
+  }
+  function showPayloadView(mod) {
+    renderPayloads(mod);
+    refs.moduleListView.classList.add('is-hidden');
+    refs.payloadView.dataset.open = 'true';
+  }
+
+  // ─── SELECTION HANDLERS ─────────────────────────────────────────────────
+  function handleSelectModule(name) {
+    const mod = findModule(name);
+    if (!mod) return;
+    state.selectedModule = mod;
+    refs.modulePillIcon.textContent = mod.icon;
+    refs.modulePillLabel.textContent = mod.name;
+    showPayloadView(mod);
+  }
+
+  function handleSelectPayload(index) {
+    if (!state.selectedModule) return;
+    const payload = state.selectedModule.payloads[Number(index)];
+    if (!payload) return;
+
+    state.selectedPayload = payload;
+    refs.searchInput.value = payload;
+    renderBadge();
+    closeDropdown();
+    refs.searchInput.focus();
+  }
+
+  function renderBadge() {
+    if (!state.selectedPayload) {
+      refs.badgeRow.innerHTML = '';
+      return;
+    }
+    refs.badgeRow.innerHTML = `
+      <span class="badge">
+        <span class="badge__text">${escapeHtml(state.selectedPayload)}</span>
+        <button class="badge__close" type="button" data-action="clear-payload" aria-label="Clear payload">✕</button>
+      </span>
+    `;
+  }
+
+  function clearPayload() {
+    state.selectedPayload = null;
+    refs.searchInput.value = '';
+    renderBadge();
+    refs.searchInput.focus();
+  }
+
+  // ─── SEARCH (opens Google in new tab) ───────────────────────────────────
+  function runSearch() {
+    const q = refs.searchInput.value.trim();
+    if (!q) {
+      refs.searchInput.focus();
+      return;
+    }
+
+    const url = buildSearchUrl(q);
+
+    // Open real Google search in a new tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+
+    // Show the "last search" card with a working link
+    renderLastSearch(q, url);
+  }
+
+  function renderLastSearch(query, url) {
+    const moduleName = state.selectedModule ? state.selectedModule.name : 'custom query';
+    const moduleIcon = state.selectedModule ? state.selectedModule.icon : '🔍';
+
+    refs.lastSearch.classList.remove('is-hidden');
+    refs.lastSearch.innerHTML = `
+      <a
+        class="last-search__card"
+        href="${escapeHtml(url)}"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Re-open search on Google"
+      >
+        <span class="last-search__icon" aria-hidden="true">${moduleIcon}</span>
+        <span class="last-search__body">
+          <span class="last-search__label">
+            <span class="last-search__label-dot" aria-hidden="true"></span>
+            Sent to Google · ${escapeHtml(moduleName)}
+          </span>
+          <span class="last-search__query">${escapeHtml(query)}</span>
+          <span class="last-search__meta">If the new tab didn't open, click “Open” →</span>
+        </span>
+        <span class="last-search__link">
+          Open
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M7 17L17 7"/><path d="M7 7h10v10"/>
+          </svg>
+        </span>
+      </a>
+    `;
+  }
+
+  // ─── THEME ──────────────────────────────────────────────────────────────
+  function applyTheme(theme) {
+    refs.root.setAttribute('data-theme', theme);
+    try { localStorage.setItem(THEME_KEY, theme); } catch (_) {}
+  }
+  function toggleTheme() {
+    const next = refs.root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+  }
+  function initTheme() {
+    let saved = null;
+    try { saved = localStorage.getItem(THEME_KEY); } catch (_) {}
+    if (saved === 'dark' || saved === 'light') {
+      applyTheme(saved);
+    } else {
+      const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+      applyTheme(prefersLight ? 'light' : 'dark');
+    }
+  }
+
+  // ─── EVENTS ─────────────────────────────────────────────────────────────
+  function bindEvents() {
+    refs.modulePill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDropdown();
+    });
+
+    refs.dropdown.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+      if (action === 'select-module')       handleSelectModule(btn.dataset.module);
+      else if (action === 'select-payload') handleSelectPayload(btn.dataset.index);
+    });
+
+    refs.backToModules.addEventListener('click', (e) => {
+      e.stopPropagation();
+      showModuleView();
+    });
+
+    refs.badgeRow.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action="clear-payload"]');
+      if (btn) clearPayload();
+    });
+
+    // Search — button & Enter both fire runSearch()
+    refs.searchSubmit.addEventListener('click', runSearch);
+    refs.searchInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        runSearch();
+      }
+    });
+
+    refs.themeToggle.addEventListener('click', toggleTheme);
+
+    document.addEventListener('click', (e) => {
+      if (!refs.searchBar.contains(e.target)) closeDropdown();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && state.dropdownOpen) {
+        closeDropdown();
+        refs.modulePill.focus();
+      }
+    });
+  }
+
+  // ─── INIT ───────────────────────────────────────────────────────────────
+  function init() {
+    initTheme();
+    renderModules();
+    bindEvents();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
 </script>
 </body>
 </html>
