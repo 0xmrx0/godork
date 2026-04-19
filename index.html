@@ -1,307 +1,1195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>GoDork</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoDork – Find what they forgot to hide</title>
 <style>
-  :root{
-    --bg:#0f1115; --elev:#1a1d24; --elev2:#232730;
-    --border:#2a2f3a; --text:#e6e6e6; --dim:#8a8f9b;
-    --accent:#ff2d2d; --blue:#4a9eff; --hover:#2a2f3a;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    background:var(--bg);color:var(--text);min-height:100vh;
-    display:flex;justify-content:center;padding-top:90px;
-  }
-  .wrap{width:100%;max-width:720px;padding:0 20px;position:relative}
+  @import url('https://fonts.googleapis.com/css2?family=VT323&family=Courier+Prime:wght@400;700&display=swap');
 
-  /* LOGO */
-  .logo-box{text-align:center;margin-bottom:32px}
-  .logo-img{max-width:220px;height:auto}
-  .tagline{color:var(--dim);font-size:14px;margin-top:10px}
-
-  /* SEARCH BAR */
-  .bar{
-    display:flex;align-items:center;background:var(--elev);
-    border:1px solid var(--border);border-radius:999px;
-    padding:6px 6px 6px 14px;gap:8px;transition:border-color .2s;
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161d;
+    --surface2: #1a1e28;
+    --border: #252a38;
+    --red: #e8291c;
+    --red2: #ff4433;
+    --red-glow: rgba(232,41,28,0.18);
+    --cyan: #00e5ff;
+    --cyan-dim: rgba(0,229,255,0.12);
+    --text: #c8cdd8;
+    --text-dim: #5a6278;
+    --text-bright: #eef0f5;
+    --mono: 'VT323', 'Courier New', monospace;
+    --body: 'Courier Prime', 'Courier New', monospace;
+    --sans: 'Courier Prime', monospace;
   }
-  .bar:focus-within{border-color:var(--blue)}
-  .pill{
-    display:flex;align-items:center;gap:6px;padding:6px 12px;
-    border-radius:999px;cursor:pointer;font-size:14px;
-    transition:background .15s;white-space:nowrap;user-select:none;
-  }
-  .pill:hover{background:var(--hover)}
-  .caret{font-size:10px;color:var(--dim)}
-  .sep{width:1px;height:20px;background:var(--border)}
-  #q{
-    flex:1;background:transparent;border:none;outline:none;
-    color:var(--text);font-size:15px;padding:10px 8px;
-  }
-  #q::placeholder{color:var(--dim)}
-  .go{
-    background:transparent;border:none;color:var(--dim);
-    font-size:16px;cursor:pointer;padding:8px 12px;border-radius:50%;
-  }
-  .go:hover{background:var(--hover);color:var(--text)}
 
-  /* CHIP */
-  .chip-row{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
-  .chip{
-    display:inline-flex;align-items:center;gap:8px;
-    background:var(--elev);border:1px solid var(--border);
-    padding:6px 12px;border-radius:999px;font-size:12px;color:var(--dim);
+  body.light-mode {
+    --bg: #f0ede6;
+    --surface: #e8e4dc;
+    --surface2: #ddd9d0;
+    --border: #c8c4bc;
+    --red: #c0160b;
+    --red2: #e02010;
+    --red-glow: rgba(192,22,11,0.12);
+    --cyan: #007a8c;
+    --text: #2a2520;
+    --text-dim: #7a756e;
+    --text-bright: #1a1510;
   }
-  .chip .x{cursor:pointer}.chip .x:hover{color:var(--accent)}
 
-  /* DROPDOWNS */
-  .dd{
-    position:absolute;display:none;background:var(--elev);
-    border:1px solid var(--border);border-radius:12px;padding:8px 0;
-    box-shadow:0 12px 40px rgba(0,0,0,.45);
-    z-index:50;min-width:280px;max-height:70vh;overflow-y:auto;
+  body.light-mode .grid-bg {
+    background-image:
+      linear-gradient(rgba(192,22,11,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(192,22,11,0.06) 1px, transparent 1px);
   }
-  .dd.show{display:block}
-  #modDD{top:calc(100% + 8px);left:20px}
-  #engDD{top:calc(100% + 8px);left:180px;min-width:180px}
-  #payDD{top:calc(100% + 8px);left:320px;min-width:380px;max-width:480px}
 
-  .grp{font-size:11px;color:var(--dim);text-transform:uppercase;
-       letter-spacing:1px;padding:10px 16px 6px;font-weight:600}
-  .it{display:flex;align-items:center;gap:10px;padding:10px 16px;
-      cursor:pointer;font-size:14px;transition:background .1s}
-  .it:hover,.it.active{background:var(--hover)}
-  .it .ic{width:22px;text-align:center}
-  .it .nm{flex:1}
-  .it .ct{background:var(--elev2);color:var(--dim);font-size:11px;
-          padding:2px 8px;border-radius:10px}
+  body.light-mode body::before { display: none; }
 
-  .p-hd{padding:12px 16px;border-bottom:1px solid var(--border);
-        font-size:13px;color:var(--dim);font-weight:600}
-  .p-it{padding:10px 16px;cursor:pointer;font-size:13px;
-        font-family:"SF Mono",Consolas,monospace;word-break:break-all}
-  .p-it:hover{background:var(--hover);color:var(--blue)}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .dd::-webkit-scrollbar{width:6px}
-  .dd::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-
-  @media(max-width:640px){
-    #payDD{left:20px;right:20px;min-width:0}
-    #modDD{left:20px;right:20px}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    transition: background 0.3s, color 0.3s;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px 60px;
+    position: relative;
+    overflow-x: hidden;
   }
+
+  /* Scan-line overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.07) 2px,
+      rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Grid bg */
+  .grid-bg {
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(232,41,28,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,41,28,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ─── LOGO ─── */
+  .logo-wrap {
+    margin-top: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .logo-ascii {
+    font-family: 'VT323', monospace;
+    font-size: clamp(13px, 2vw, 17px);
+    line-height: 1.25;
+    color: var(--red);
+    letter-spacing: 0.03em;
+    text-align: center;
+    white-space: pre;
+  }
+
+  .logo-reflection {
+    font-family: 'VT323', monospace;
+    font-size: clamp(14px, 2.4vw, 20px);
+    line-height: 1.2;
+    color: var(--red);
+    letter-spacing: 0.03em;
+    text-align: center;
+    white-space: pre;
+    opacity: 0.18;
+    transform: scaleY(-1);
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent 80%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0.6), transparent 80%);
+    margin-top: -2px;
+  }
+
+  @keyframes flicker {
+    0%,95%,100% { opacity: 1; }
+    96% { opacity: 0.85; }
+    97% { opacity: 1; }
+    98% { opacity: 0.7; }
+    99% { opacity: 1; }
+  }
+
+  .tagline {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: var(--cyan);
+    letter-spacing: 0.12em;
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0.85;
+  }
+
+  .tagline::before,
+  .tagline::after {
+    content: '<<<';
+    color: var(--red);
+    opacity: 0.5;
+    font-size: 11px;
+  }
+  .tagline::before { content: '>>>'; }
+
+  .warn-icon {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background: var(--red);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    opacity: 0.9;
+    flex-shrink: 0;
+  }
+
+  /* ─── SEARCH BAR ─── */
+  .search-container {
+    margin-top: 40px;
+    width: 100%;
+    max-width: 740px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+
+  .search-bar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: visible;
+    position: relative;
+    transition: border-color 0.2s;
+  }
+
+  .search-bar:focus-within {
+    border-color: rgba(232,41,28,0.5);
+    box-shadow: 0 0 0 3px rgba(232,41,28,0.08);
+  }
+
+  /* Module pill */
+  .module-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 14px 0 12px;
+    height: 48px;
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-bright);
+    position: relative;
+    user-select: none;
+    flex-shrink: 0;
+    min-width: 140px;
+  }
+
+  .module-pill .module-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .module-pill .module-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .module-pill .caret {
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid var(--text-dim);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .module-pill.open .caret { transform: rotate(180deg); }
+
+  /* Engine selector */
+  .engine-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 12px;
+    height: 48px;
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    user-select: none;
+    flex-shrink: 0;
+  }
+
+  .engine-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+    flex-shrink: 0;
+  }
+
+  /* Search input */
+  .search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 0 14px;
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--text-bright);
+    height: 48px;
+    caret-color: var(--red);
+  }
+
+  .search-input::placeholder { color: var(--text-dim); }
+
+  .search-btn {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .search-btn:hover { color: var(--red2); }
+
+  /* ─── PAYLOAD BADGE ─── */
+  .payload-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: var(--red-glow);
+    border: 1px solid rgba(232,41,28,0.3);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #ff7060;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .payload-close {
+    cursor: pointer;
+    color: var(--text-dim);
+    font-size: 14px;
+    line-height: 1;
+    transition: color 0.15s;
+  }
+  .payload-close:hover { color: var(--red2); }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ─── DROPDOWN PANELS ─── */
+  .dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    z-index: 1000;
+    min-width: 280px;
+    max-height: 480px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .dropdown.open { display: block; animation: slideDown 0.18s ease; }
+
+  @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+
+  .dropdown::-webkit-scrollbar { width: 4px; }
+  .dropdown::-webkit-scrollbar-track { background: transparent; }
+  .dropdown::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Module list */
+  .section-header {
+    padding: 10px 14px 6px;
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .module-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.12s;
+    border-bottom: 1px solid rgba(37,42,56,0.5);
+  }
+
+  .module-item:hover { background: var(--surface2); }
+  .module-item.active { background: rgba(232,41,28,0.06); }
+
+  .module-item .mi-icon { font-size: 16px; flex-shrink: 0; }
+  .module-item .mi-name { flex: 1; font-family: var(--mono); font-size: 13px; color: var(--text-bright); }
+  .module-item .mi-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    border-radius: 10px;
+    padding: 2px 8px;
+    min-width: 26px;
+    text-align: center;
+  }
+
+  .module-item .mi-arrow {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-left: 2px;
+  }
+
+  /* Payload sub-panel */
+  .payload-panel {
+    display: none;
+  }
+  .payload-panel.open { display: block; }
+
+  .payload-back {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--cyan);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.12s;
+  }
+  .payload-back:hover { background: var(--surface2); }
+
+  .payload-title {
+    padding: 8px 14px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .payload-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: background 0.12s;
+    border-bottom: 1px solid rgba(37,42,56,0.5);
+  }
+  .payload-item:hover { background: var(--surface2); }
+  .payload-item.selected { background: rgba(232,41,28,0.08); border-left: 2px solid var(--red); }
+
+  .payload-item .pi-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+
+  .payload-item.selected .pi-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+  .payload-item .pi-text {
+    flex: 1;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .payload-item.selected .pi-text { color: #ff7060; }
+
+  /* ─── RESULTS AREA ─── */
+  .results-area {
+    width: 100%;
+    max-width: 740px;
+    margin-top: 28px;
+  }
+
+  .result-info {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-info .ri-query {
+    color: var(--cyan);
+    opacity: 0.8;
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 400px;
+  }
+
+  .result-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    transition: border-color 0.15s;
+    cursor: pointer;
+    animation: fadeIn 0.22s ease;
+  }
+
+  .result-card:hover { border-color: rgba(232,41,28,0.3); }
+
+  .result-card .rc-url {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: #3aca7c;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .result-card .rc-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #7eb8f5;
+    margin-bottom: 6px;
+    text-decoration: none;
+  }
+
+  .result-card .rc-snippet {
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+
+  .result-card .rc-snippet mark {
+    background: rgba(232,41,28,0.2);
+    color: var(--red2);
+    border-radius: 2px;
+    padding: 0 2px;
+  }
+
+  /* ─── THEME TOGGLE ─── */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    padding: 5px 14px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-family: 'VT323', monospace;
+    font-size: 15px;
+    color: var(--text);
+    background: var(--surface);
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+    user-select: none;
+    letter-spacing: 0.08em;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--red);
+    color: var(--text-bright);
+  }
+
+  .toggle-track {
+    width: 28px;
+    height: 14px;
+    border-radius: 7px;
+    background: var(--border);
+    position: relative;
+    transition: background 0.25s;
+    flex-shrink: 0;
+  }
+
+  body.light-mode .toggle-track { background: var(--red); }
+
+  .toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    transition: left 0.25s, background 0.25s;
+  }
+
+  body.light-mode .toggle-thumb {
+    left: 16px;
+    background: #fff;
+  }
+
+  /* Light mode scan-line removal */
+  body.light-mode::before { opacity: 0; }
+
+  /* ─── STATUS BAR ─── */
+  .status-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: rgba(13,15,20,0.95);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    backdrop-filter: blur(8px);
+    z-index: 100;
+  }
+
+  .status-bar .sb-item { display: flex; align-items: center; gap: 6px; }
+  .status-bar .sb-dot { width: 6px; height: 6px; border-radius: 50%; background: #3aca7c; box-shadow: 0 0 5px #3aca7c; }
+  .status-bar .sb-red { background: var(--red); box-shadow: 0 0 5px var(--red); }
+
+  /* ─── LOADING ─── */
+  .loading-bar {
+    display: none;
+    width: 100%;
+    max-width: 740px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+
+  .loading-bar.active { display: block; }
+
+  .loading-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--red), var(--red2), var(--cyan));
+    border-radius: 1px;
+    animation: loadAnim 1.4s ease-in-out infinite;
+  }
+
+  @keyframes loadAnim {
+    0% { width: 0; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0; margin-left: 100%; }
+  }
+
+  /* ─── EMPTY STATE ─── */
+  .empty-state {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--text-dim);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 2;
+  }
+
+  .empty-state .es-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+
+  /* Utility */
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
-<main class="wrap">
 
-  <div class="logo-box">
-    <img src="logo.png" alt="GoDork" class="logo-img"/>
-    <p class="tagline">Find what they forgot to hide.</p>
+<div class="grid-bg"></div>
+
+<!-- ─── TOP BAR ─── -->
+<div style="position:fixed;top:0;right:0;z-index:200;padding:10px 18px;display:flex;align-items:center;">
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()">
+    <span id="themeLabel" style="font-family:'VT323',monospace;font-size:15px;letter-spacing:0.08em;">DARK</span>
+    <div class="toggle-track"><div class="toggle-thumb"></div></div>
+    <span id="themeLabelRight" style="font-family:'VT323',monospace;font-size:15px;letter-spacing:0.08em;opacity:0.4;">LIGHT</span>
+  </button>
+</div>
+
+<!-- ─── LOGO ─── -->
+<div class="logo-wrap">
+  <pre class="logo-ascii"> 
+
+    
+  ▄████   █████   █████▄   █████   ██▀███   ██ ▄█▀
+ ██  ▀█  ██   ██  ██   █▌ ██   ██  ██   ██  ██▄█
+ ██ ▄▄▄  ██   ██  ██   █▌ ██   ██  ██  ▄█   ███▄ 
+ ▓█  ██  ██   ██  ▓█   █▌ ██   ██  ██▀▀█▄   ██ █▄
+  ▓███▀   ████    ▒████    ████▓   ██▓  ██  ██  █▄
+  ░   ░   ░ ▒ ▒░  ░ ▒  ▒   ░ ▒ ▒░   ░▒ ░ ▒░░ ░▒ ▒░
+░ ░   ░ ░ ░ ░ ▒   ░ ░  ░ ░ ░ ░ ▒    ░░   ░ ░ ░░ ░ 
+      ░     ░ ░     ░        ░ ░     ░     ░  ░   
+                  ░
+          Google Dorking Framework   
+ &gt;&gt;&gt;  ⚠️  Find what they forgot to hide...  &lt;&lt;&lt;</pre>
+</div>
+
+<!-- ─── SEARCH BAR ─── -->
+<div class="search-container">
+  <div class="search-bar" id="searchBar">
+
+    <!-- Module selector -->
+    <div class="module-pill" id="modulePill" onclick="toggleModuleDropdown()">
+      <span class="module-icon" id="modulePillIcon">☰</span>
+      <span class="module-label" id="modulePillLabel">Select Module</span>
+      <span class="caret" id="moduleCaret"></span>
+    </div>
+
+    <!-- Engine -->
+    <div class="engine-pill">
+      <span class="engine-dot"></span>
+      Google
+    </div>
+
+    <!-- Input -->
+    <input
+      class="search-input"
+      id="searchInput"
+      type="text"
+      placeholder="Search and find anything..."
+      onkeydown="handleKey(event)"
+    />
+
+    <!-- Search btn -->
+    <button class="search-btn" onclick="runSearch()" title="Search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+    </button>
+
+    <!-- Module dropdown -->
+    <div class="dropdown" id="moduleDropdown">
+      <div id="moduleListView">
+        <!-- filled by JS -->
+      </div>
+      <div class="payload-panel" id="payloadPanel">
+        <div class="payload-back" onclick="backToModules()">
+          ← back to modules
+        </div>
+        <div class="payload-title" id="payloadPanelTitle">SELECT PAYLOAD</div>
+        <div id="payloadList"></div>
+      </div>
+    </div>
+
   </div>
 
-  <div class="bar">
-    <div class="pill" id="modPill"><span id="modLbl">select module</span><span class="caret">▾</span></div>
-    <div class="sep"></div>
-    <div class="pill" id="engPill"><span>🔎</span><span id="engLbl">Google</span><span class="caret">▾</span></div>
-    <input id="q" placeholder="Search and find anything..." autocomplete="off"/>
-    <button class="go" id="goBtn">🔍</button>
+  <!-- Selected payload badge -->
+  <div id="payloadBadge" class="hidden">
+    <span class="payload-badge">
+      <span id="payloadBadgeText"></span>
+      <span class="payload-close" onclick="clearPayload()">✕</span>
+    </span>
   </div>
 
-  <div class="chip-row" id="chipRow"></div>
+  <!-- Loading bar -->
+  <div class="loading-bar" id="loadingBar">
+    <div class="loading-fill"></div>
+  </div>
+</div>
 
-  <div class="dd" id="modDD"></div>
-  <div class="dd" id="payDD"></div>
-  <div class="dd" id="engDD"></div>
+<!-- ─── RESULTS ─── -->
+<div class="results-area" id="resultsArea"></div>
 
-</main>
+<!-- ─── STATUS BAR ─── -->
+<div class="status-bar">
+</div>
 
 <script>
-/* ---------- DATA ---------- */
-const DB = {
-  PASSWORDS:{
-    "admin / panels":{ic:"📱",p:[
-      'intitle:"admin login"','inurl:admin/login.php',
-      'intitle:"admin panel" inurl:admin','inurl:/wp-admin/ intitle:"login"',
-      'intitle:"phpMyAdmin"','inurl:/administrator/index.php',
-      'intitle:"cPanel Login"','intitle:"Plesk Login"',
-      'inurl:"/admin/dashboard"','intitle:"login" inurl:admin'
-    ]},
-    "env / secrets":{ic:"⭐",p:[
-      'filetype:env "DB_PASSWORD"','intitle:"index of" .env',
-      'ext:env intext:"APP_KEY"','filetype:env "AWS_SECRET"',
-      'filetype:env "JWT_SECRET"','ext:env "DATABASE_URL"',
-      'filetype:env "FIREBASE"','filetype:env "REDIS_PASSWORD"'
-    ]},
-    "passwords / files":{ic:"🔑",p:[
-      'filetype:txt intext:"password"','filetype:log intext:"password"',
-      'intitle:"index of" passwd','filetype:sql "password"',
-      'inurl:passwords.txt','filetype:bak password',
-      'filetype:csv "password"','filetype:ini "password"'
-    ]}
+// ─── DATA ───
+const MODULES = [
+  {
+    section: "PASSWORDS",
+    items: [
+      {
+        icon: "🔐", name: "admin / panels", count: 18,
+        payloads: [
+          'intitle:"admin panel" inurl:admin',
+          'intitle:"login" inurl:/admin/login',
+          'inurl:"/wp-admin/admin-ajax.php"',
+          'inurl:cpanel filetype:php',
+          'intitle:"phpMyAdmin" inurl:phpmyadmin',
+          'inurl:admin intitle:"dashboard" filetype:php',
+          'inurl:"/admin/login.php" intitle:"admin"',
+          'inurl:"admin.aspx" OR inurl:"admin.asp"',
+          'intext:"admin" intitle:"login" inurl:controlpanel',
+          'inurl:"manager/html" intitle:"Apache Tomcat"',
+          'inurl:8080/manager/html',
+          'intitle:"Webmin" inurl:10000',
+          'inurl:"/plesk/client.php"',
+          'inurl:"/directadmin" intitle:"DirectAdmin"',
+          'filetype:php inurl:admin intext:"username" intext:"password"',
+          'inurl:"/admin/config.php"',
+          'intitle:"cPanel" inurl:2082 OR inurl:2083',
+          'inurl:"whm" intitle:"WHM Login"'
+        ]
+      },
+      {
+        icon: "⭐", name: "env / secrets", count: 13,
+        payloads: [
+          'filetype:env intext:"APP_KEY"',
+          'filetype:env intext:"DB_PASSWORD"',
+          'inurl:".env" intext:"SECRET"',
+          'filetype:env intext:"AWS_SECRET_ACCESS_KEY"',
+          'filetype:env intext:"MAIL_PASSWORD"',
+          'inurl:".env.example" intext:"password"',
+          'filetype:env intext:"STRIPE_SECRET"',
+          'inurl:".env" intext:"SENDGRID_API_KEY"',
+          'filetype:env intext:"TWILIO_AUTH_TOKEN"',
+          'filetype:env intext:"GOOGLE_API_KEY"',
+          'inurl:".env" intext:"JWT_SECRET"',
+          'filetype:env intext:"PRIVATE_KEY"',
+          'inurl:".env" intext:"OAUTH_SECRET"'
+        ]
+      },
+      {
+        icon: "🔑", name: "passwords / files", count: 13,
+        payloads: [
+          'filetype:txt intext:"password" inurl:ftp',
+          'filetype:log intext:"password"',
+          'filetype:xls intext:"username" intext:"password"',
+          'filetype:csv intext:"password"',
+          'inurl:wp-config.php intext:"DB_PASSWORD"',
+          'filetype:sql intext:"INSERT INTO" intext:"password"',
+          'filetype:ini intext:"password"',
+          'inurl:config.php intext:"password"',
+          'filetype:bak intext:"password"',
+          'inurl:htpasswd filetype:htpasswd',
+          'filetype:txt inurl:passwords',
+          'intext:"password" filetype:xls site:*.edu',
+          'filetype:pem intext:"PRIVATE KEY"'
+        ]
+      }
+    ]
   },
-  DATABASE:{
-    "database / exposed":{ic:"💾",p:[
-      'intitle:"index of" *.sql','filetype:sql "INSERT INTO"',
-      'inurl:phpmyadmin/index.php','filetype:sql "CREATE TABLE"',
-      'inurl:/adminer.php','filetype:sqlite',
-      'filetype:db "users"','inurl:pgadmin'
-    ]},
-    "config / files":{ic:"⚙️",p:[
-      'filetype:cfg "password"','filetype:conf intext:"password"',
-      'inurl:web.config','filetype:ini "mysql password"',
-      'inurl:wp-config.php.bak','filetype:yml "password"',
-      'filetype:json "api_key"','inurl:settings.py "SECRET_KEY"'
-    ]}
+  {
+    section: "DATABASE",
+    items: [
+      {
+        icon: "🗄️", name: "database / exposed", count: 18,
+        payloads: [
+          'inurl:phpmyadmin/index.php',
+          'intext:"phpMyAdmin" intitle:"Welcome to phpMyAdmin"',
+          'inurl:adminer.php',
+          'filetype:sql intext:"CREATE TABLE"',
+          'inurl:"db.php" filetype:php intext:"mysql_connect"',
+          'intext:"MongoDB" intitle:"RoboMongo"',
+          'inurl:8081 intitle:"Adminer"',
+          'inurl:5984/_utils/ intitle:"CouchDB"',
+          'inurl:9200/_cat/indices',
+          'intitle:"Kibana" inurl:5601',
+          'inurl:8086/query intitle:"InfluxDB"',
+          'inurl:6379 intitle:"Redis"',
+          'inurl:27017 intitle:"MongoDB"',
+          'intext:"postgresql" filetype:log',
+          'filetype:mdb inurl:*.mdb',
+          'inurl:"config/database.yml" intext:"password"',
+          'filetype:properties intext:"jdbc:mysql"',
+          'inurl:"database.php" intext:"mysql_pconnect"'
+        ]
+      },
+      {
+        icon: "⚙️", name: "config / files", count: 16,
+        payloads: [
+          'filetype:xml inurl:config intext:"password"',
+          'filetype:cfg intext:"password"',
+          'inurl:config.yml intext:"password"',
+          'filetype:json inurl:settings intext:"secret"',
+          'inurl:"application.properties" intext:"password"',
+          'filetype:conf intext:"password"',
+          'inurl:"settings.py" intext:"SECRET_KEY"',
+          'filetype:xml intext:"connectionString"',
+          'inurl:"config.json" intext:"api_key"',
+          'filetype:properties intext:"password"',
+          'inurl:"web.config" intext:"password"',
+          'filetype:yaml intext:"password"',
+          'inurl:".htaccess" intext:"AuthUserFile"',
+          'filetype:ini inurl:config intext:"host"',
+          'inurl:"app.config" intext:"password"',
+          'filetype:xml inurl:hibernate intext:"password"'
+        ]
+      }
+    ]
   },
-  SENSITIVE:{
-    "sensitive / dirs":{ic:"📁",p:[
-      'intitle:"index of /backup"','intitle:"index of /private"',
-      'intitle:"index of /admin"','intitle:"index of" ".git"',
-      'intitle:"index of /logs"','intitle:"index of /.ssh"',
-      'intitle:"index of /keys"','intitle:"index of /secret"'
-    ]},
-    "usernames / accounts":{ic:"👤",p:[
-      'filetype:txt "username" "password"',
-      'filetype:csv intext:"email" intext:"password"',
-      'filetype:xls "username"','filetype:sql "users" "email"',
-      'filetype:json "users"','intitle:"index of" accounts.db'
-    ]}
+  {
+    section: "SENSITIVE",
+    items: [
+      {
+        icon: "📁", name: "sensitive / dirs", count: 17,
+        payloads: [
+          'intitle:"Index of" inurl:backup',
+          'intitle:"Index of" inurl:secret',
+          'intitle:"Index of" passwd',
+          'intitle:"Index of" inurl:private',
+          'intitle:"Index of" inurl:upload',
+          'intitle:"Index of" inurl:.git',
+          'intitle:"Index of" inurl:.svn',
+          'intitle:"Index of" inurl:logs',
+          'intitle:"Index of" ".bash_history"',
+          'intitle:"Index of" ".ssh"',
+          'intitle:"Index of" "wp-content/uploads"',
+          'intitle:"Index of" inurl:tmp',
+          'intitle:"Index of" inurl:cache',
+          'intitle:"Index of" "server.key"',
+          'intitle:"Index of" inurl:dump',
+          'intitle:"Index of" ".env"',
+          'intitle:"Index of" inurl:credentials'
+        ]
+      },
+      {
+        icon: "👤", name: "usernames / accounts", count: 14,
+        payloads: [
+          'intext:"username" filetype:log',
+          'filetype:sql intext:"INSERT INTO users"',
+          'intext:"email" intext:"password" filetype:txt',
+          'filetype:csv intext:"email" intext:"username"',
+          'inurl:"/etc/passwd" intitle:"Index of"',
+          'filetype:log intext:"user login"',
+          'intext:"registered users" filetype:txt',
+          'filetype:xls intext:"first name" intext:"last name" intext:"email"',
+          'intext:"user_name" intext:"user_pass" filetype:sql',
+          'inurl:listusers filetype:php',
+          'intext:"mail" "passw" filetype:xls',
+          'filetype:csv intext:"ssn" OR intext:"social security"',
+          'filetype:xls intext:"credit card" OR intext:"card number"',
+          'intext:"login" filetype:log'
+        ]
+      }
+    ]
   },
-  CLOUD:{
-    "api / keys":{ic:"🗝️",p:[
-      'intext:"AIza" filetype:env','"AWS_ACCESS_KEY_ID" filetype:env',
-      'intext:"sk_live_" filetype:log','filetype:json "client_secret"',
-      'intext:"ghp_" site:github.com','intext:"AKIA" filetype:log',
-      'filetype:js "apiKey:"','"firebaseConfig" filetype:js'
-    ]}
+  {
+    section: "CLOUD",
+    items: [
+      {
+        icon: "🔑", name: "api / keys", count: 17,
+        payloads: [
+          'intext:"api_key" filetype:json',
+          'intext:"client_secret" filetype:json',
+          'inurl:".travis.yml" intext:"api_key"',
+          'inurl:"Dockerfile" intext:"AWS_SECRET"',
+          'intext:"AKIA" filetype:txt',
+          'inurl:".npmrc" intext:"_authToken"',
+          'inurl:".gitconfig" intext:"token"',
+          'filetype:json intext:"type" intext:"service_account"',
+          'intext:"firebase" intext:"apiKey" filetype:js',
+          'intext:"azure_client_secret" filetype:yml',
+          'inurl:"credentials" filetype:json intext:"aws"',
+          'intext:"heroku_api_key" filetype:json',
+          'intext:"MAILCHIMP_API_KEY" filetype:env',
+          'intext:"slack_token" filetype:json',
+          'intext:"github_token" filetype:yml',
+          'inurl:".boto" intext:"aws_secret_access_key"',
+          'intext:"BEGIN RSA PRIVATE KEY" filetype:pem'
+        ]
+      }
+    ]
   },
-  SERVER:{
-    "server / info":{ic:"🖥️",p:[
-      'intitle:"Apache2 Ubuntu Default Page"','intitle:"phpinfo()"',
-      'intitle:"Welcome to nginx!"','inurl:server-status',
-      'intitle:"IIS Windows Server"','intitle:"Tomcat"',
-      'inurl:/actuator/health'
-    ]},
-    "vuln / files":{ic:"⚡",p:[
-      'inurl:"/.git/" intitle:"index of"','inurl:".svn/entries"',
-      'filetype:log "stack trace"','inurl:wp-content/debug.log',
-      'inurl:".DS_Store"','inurl:/phpinfo.php',
-      'filetype:log "SQL syntax"','inurl:"/wp-json/wp/v2/users"'
-    ]}
+  {
+    section: "SERVER",
+    items: [
+      {
+        icon: "🖥️", name: "server / info", count: 13,
+        payloads: [
+          'intitle:"Apache Status" inurl:server-status',
+          'intitle:"Apache2 Ubuntu Default Page"',
+          'intitle:"nginx" intext:"Welcome to nginx"',
+          'intitle:"IIS Windows Server"',
+          'inurl:phpinfo.php intitle:"phpinfo()"',
+          'intitle:"Test Page for the Apache HTTP Server"',
+          'intitle:"Welcome to OpenResty!"',
+          'inurl:server-info intitle:"Apache Server Information"',
+          'intitle:"Tomcat" inurl:8080',
+          'inurl:"wp-login.php" intitle:"WordPress"',
+          'intitle:"Drupal" inurl:user/login',
+          'intitle:"Joomla" inurl:administrator',
+          'intitle:"XAMPP" inurl:dashboard'
+        ]
+      },
+      {
+        icon: "🛡️", name: "vuln / files", count: 15,
+        payloads: [
+          'inurl:".git/HEAD" intitle:"Index of"',
+          'inurl:".svn/entries"',
+          'inurl:"WEB-INF/web.xml"',
+          'inurl:backup filetype:sql',
+          'inurl:install.php intitle:"WordPress Installation"',
+          'inurl:phpshell.php',
+          'inurl:c99.php OR inurl:r57.php',
+          'filetype:php intext:"eval(base64_decode"',
+          'inurl:shell.php',
+          'inurl:"upload.php" intext:"file upload"',
+          'inurl:"/cgi-bin/" filetype:sh',
+          'intitle:"Test Page" filetype:php',
+          'inurl:"/proc/self/environ"',
+          'inurl:config.bak OR inurl:config.old',
+          'inurl:".DS_Store" intitle:"Index of"'
+        ]
+      }
+    ]
   }
-};
-const ENG = [
-  {n:"Google",i:"🔎",u:"https://www.google.com/search?q="},
-  {n:"Bing",i:"🅱️",u:"https://www.bing.com/search?q="},
-  {n:"DuckDuckGo",i:"🦆",u:"https://duckduckgo.com/?q="},
-  {n:"Yandex",i:"🟥",u:"https://yandex.com/search/?text="},
-  {n:"Shodan",i:"🛰️",u:"https://www.shodan.io/search?query="}
 ];
 
-/* ---------- STATE ---------- */
-const S = {eng:ENG[0], mod:null, pay:null};
-const $ = s => document.querySelector(s);
-const modDD=$("#modDD"), engDD=$("#engDD"), payDD=$("#payDD");
-const modLbl=$("#modLbl"), engLbl=$("#engLbl");
-const q=$("#q"), chipRow=$("#chipRow");
+// ─── STATE ───
+let selectedModule = null;
+let selectedPayload = null;
+let dropdownOpen = false;
+let showingPayloads = false;
 
-/* ---------- BUILD MODULES ---------- */
-for(const g in DB){
-  modDD.insertAdjacentHTML("beforeend",`<div class="grp">${g}</div>`);
-  for(const name in DB[g]){
-    const m = DB[g][name];
-    const el = document.createElement("div");
-    el.className = "it";
-    el.innerHTML = `<span class="ic">${m.ic}</span><span class="nm">${name}</span><span class="ct">${m.p.length}</span>`;
-    el.onmouseenter = ()=>{
-      modDD.querySelectorAll(".it").forEach(i=>i.classList.remove("active"));
-      el.classList.add("active");
-      showPayloads(name, m);
-    };
-    el.onclick = e=>{e.stopPropagation(); showPayloads(name,m);};
-    modDD.appendChild(el);
+// ─── INIT ───
+function buildModuleList() {
+  const container = document.getElementById('moduleListView');
+  let html = '';
+  MODULES.forEach(group => {
+    html += `<div class="section-header">${group.section}</div>`;
+    group.items.forEach(mod => {
+      html += `
+        <div class="module-item" onclick="selectModule('${escape(mod.name)}')">
+          <span class="mi-icon">${mod.icon}</span>
+          <span class="mi-name">${mod.name}</span>
+          <span class="mi-count">${mod.count}</span>
+          <span class="mi-arrow">›</span>
+        </div>`;
+    });
+  });
+  container.innerHTML = html;
+}
+
+buildModuleList();
+
+// ─── MODULE DROPDOWN ───
+function toggleModuleDropdown() {
+  dropdownOpen = !dropdownOpen;
+  const dd = document.getElementById('moduleDropdown');
+  const caret = document.getElementById('moduleCaret');
+  const pill = document.getElementById('modulePill');
+
+  if (dropdownOpen) {
+    dd.classList.add('open');
+    pill.classList.add('open');
+    showModuleList();
+  } else {
+    dd.classList.remove('open');
+    pill.classList.remove('open');
   }
 }
 
-/* ---------- PAYLOAD PANEL ---------- */
-function showPayloads(name, m){
-  payDD.innerHTML = `<div class="p-hd">${m.ic} ${name} — ${m.p.length} payloads</div>`;
-  m.p.forEach(p=>{
-    const el = document.createElement("div");
-    el.className = "p-it";
-    el.textContent = p;
-    el.onclick = e=>{
-      e.stopPropagation();
-      S.mod = name; S.pay = p;
-      modLbl.textContent = name;
-      q.value = p;
-      renderChip();
-      closeAll();
-      q.focus();
-    };
-    payDD.appendChild(el);
-  });
-  payDD.classList.add("show");
+function closeDropdown() {
+  dropdownOpen = false;
+  document.getElementById('moduleDropdown').classList.remove('open');
+  document.getElementById('modulePill').classList.remove('open');
 }
 
-/* ---------- ENGINES ---------- */
-ENG.forEach(e=>{
-  const el = document.createElement("div");
-  el.className = "it";
-  el.innerHTML = `<span class="ic">${e.i}</span><span class="nm">${e.n}</span>`;
-  el.onclick = ev=>{
-    ev.stopPropagation();
-    S.eng = e; engLbl.textContent = e.n;
-    closeAll();
-  };
-  engDD.appendChild(el);
+// Close on outside click
+document.addEventListener('click', function(e) {
+  if (!document.getElementById('searchBar').contains(e.target)) {
+    closeDropdown();
+  }
 });
 
-/* ---------- CHIP ---------- */
-function renderChip(){
-  chipRow.innerHTML = "";
-  if(S.pay){
-    const c = document.createElement("div");
-    c.className = "chip";
-    c.innerHTML = `<span>✓ ${S.mod}</span><span class="x">✕</span>`;
-    c.querySelector(".x").onclick = ()=>{
-      S.mod=null; S.pay=null;
-      modLbl.textContent = "select module";
-      q.value = "";
-      chipRow.innerHTML = "";
-    };
-    chipRow.appendChild(c);
-  }
+// ─── MODULE SELECT → SHOW PAYLOADS ───
+function selectModule(name) {
+  const modName = unescape(name);
+  let found = null;
+  MODULES.forEach(g => g.items.forEach(m => { if (m.name === modName) found = m; }));
+  if (!found) return;
+
+  selectedModule = found;
+  document.getElementById('modulePillIcon').textContent = found.icon;
+  document.getElementById('modulePillLabel').textContent = found.name;
+
+  showPayloadPanel(found);
 }
 
-/* ---------- OPEN / CLOSE ---------- */
-function closeAll(){modDD.classList.remove("show");engDD.classList.remove("show");payDD.classList.remove("show");}
-$("#modPill").onclick = e=>{
-  e.stopPropagation();
-  const open = modDD.classList.contains("show");
-  closeAll(); if(!open) modDD.classList.add("show");
-};
-$("#engPill").onclick = e=>{
-  e.stopPropagation();
-  const open = engDD.classList.contains("show");
-  closeAll(); if(!open) engDD.classList.add("show");
-};
-document.addEventListener("click", closeAll);
-modDD.onclick = e=>e.stopPropagation();
-payDD.onclick = e=>e.stopPropagation();
+function showPayloadPanel(mod) {
+  showingPayloads = true;
+  document.getElementById('moduleListView').classList.add('hidden');
+  const panel = document.getElementById('payloadPanel');
+  panel.classList.add('open');
+  document.getElementById('payloadPanelTitle').textContent = mod.name.toUpperCase() + ' — SELECT PAYLOAD';
 
-/* ---------- SEARCH ---------- */
-function go(){
-  const v = q.value.trim();
-  if(!v){q.focus();return;}
-  window.open(S.eng.u + encodeURIComponent(v), "_blank");
+  let html = '';
+  mod.payloads.forEach((p, i) => {
+    const isSelected = selectedPayload === p;
+    html += `
+      <div class="payload-item ${isSelected ? 'selected' : ''}" onclick="pickPayload(${i})">
+        <div class="pi-dot"></div>
+        <div class="pi-text">${escapeHtml(p)}</div>
+      </div>`;
+  });
+  document.getElementById('payloadList').innerHTML = html;
 }
-$("#goBtn").onclick = go;
-q.onkeydown = e=>{if(e.key==="Enter") go();};
+
+function backToModules() {
+  showingPayloads = false;
+  document.getElementById('moduleListView').classList.remove('hidden');
+  document.getElementById('payloadPanel').classList.remove('open');
+}
+
+function showModuleList() {
+  showingPayloads = false;
+  document.getElementById('moduleListView').classList.remove('hidden');
+  document.getElementById('payloadPanel').classList.remove('open');
+}
+
+// ─── PAYLOAD PICK ───
+function pickPayload(idx) {
+  if (!selectedModule) return;
+  selectedPayload = selectedModule.payloads[idx];
+
+  document.getElementById('payloadBadgeText').textContent = selectedPayload;
+  document.getElementById('payloadBadge').classList.remove('hidden');
+  document.getElementById('searchInput').value = selectedPayload;
+  document.getElementById('searchInput').focus();
+
+  closeDropdown();
+  updateStatus('Payload selected — hit Enter to search');
+}
+
+function clearPayload() {
+  selectedPayload = null;
+  document.getElementById('payloadBadge').classList.add('hidden');
+  document.getElementById('searchInput').value = '';
+  updateStatus('Ready');
+}
+
+// ─── SEARCH ───
+function handleKey(e) {
+  if (e.key === 'Enter') runSearch();
+}
+
+function runSearch() {
+  const q = document.getElementById('searchInput').value.trim();
+  if (!q) return;
+
+  const lb = document.getElementById('loadingBar');
+  lb.classList.add('active');
+  updateStatus('Searching...');
+
+  setTimeout(() => {
+    lb.classList.remove('active');
+    showResults(q);
+    updateStatus('Search complete');
+  }, 900);
+}
+
+function showResults(query) {
+  const area = document.getElementById('resultsArea');
+
+  const mockResults = [
+    {
+      url: 'http://target-site.example.com/admin/login.php',
+      title: 'Admin Panel – Login',
+      snippet: `Found via dork: <mark>${escapeHtml(query.slice(0,40))}</mark>. This page exposes an administrative login interface without rate limiting or CAPTCHA protection.`
+    },
+    {
+      url: 'ftp://backup.example-corp.com/private/passwords.txt',
+      title: 'passwords.txt – Exposed via FTP',
+      snippet: `Directory listing enabled. File contains plaintext credentials matching the dork pattern <mark>${escapeHtml(query.slice(0,30))}</mark>.`
+    },
+    {
+      url: 'https://dev.company.io/.env',
+      title: '.env – Environment File Exposed',
+      snippet: `Sensitive configuration file accessible without auth. Keys visible: APP_KEY, DB_PASSWORD, <mark>AWS_SECRET_ACCESS_KEY</mark>.`
+    },
+    {
+      url: 'https://vulnerable-app.io/phpinfo.php',
+      title: 'phpinfo() – Server Information Disclosure',
+      snippet: `Full PHP configuration exposed. Server: Apache/2.4.41. OS: Linux. Matched dork: <mark>${escapeHtml(query.slice(0,25))}</mark>.`
+    },
+    {
+      url: 'https://api.leaked-corp.com/v1/config.json',
+      title: 'config.json – API Keys Exposed',
+      snippet: `Public JSON endpoint contains <mark>api_key</mark>, client_secret and bearer token. No authentication required to access.`
+    }
+  ];
+
+  let html = `
+    <div class="result-info">
+      <span>About 1,240 results for</span>
+      <span class="ri-query">${escapeHtml(query)}</span>
+    </div>`;
+
+  mockResults.forEach(r => {
+    html += `
+      <div class="result-card" onclick="openLink('${r.url}')">
+        <div class="rc-url">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          ${escapeHtml(r.url)}
+        </div>
+        <div class="rc-title">${escapeHtml(r.title)}</div>
+        <div class="rc-snippet">${r.snippet}</div>
+      </div>`;
+  });
+
+  area.innerHTML = html;
+}
+
+// ─── THEME TOGGLE ───
+function toggleTheme() {
+  document.body.classList.toggle('light-mode');
+  const isLight = document.body.classList.contains('light-mode');
+  document.getElementById('themeLabel').style.opacity = isLight ? '0.4' : '1';
+  document.getElementById('themeLabelRight').style.opacity = isLight ? '1' : '0.4';
+}
+
+// ─── HELPERS ───
+function updateStatus(msg) {
+  const el = document.getElementById('sbStatus');
+  if (el) el.textContent = msg;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function escape(s) { return encodeURIComponent(s); }
+function unescape(s) { return decodeURIComponent(s); }
 </script>
 </body>
 </html>
