@@ -9,7 +9,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=VT323&family=Courier+Prime:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Iceberg&family=VT323&family=Courier+Prime:wght@400;700&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
 
 <style>
   /* ========== DESIGN TOKENS ========== */
@@ -31,6 +31,7 @@
     --font-mono: 'VT323', 'Courier New', monospace;
     --font-body: 'Courier Prime', 'Courier New', monospace;
     --font-logo: 'JetBrains Mono', 'Courier New', monospace;
+    --font-display: 'Iceberg', 'Courier New', monospace;
 
     --radius-sm: 4px;
     --radius-md: 6px;
@@ -198,42 +199,59 @@
     white-space: pre;
     text-align: center;
     margin: 0 auto;
-    /* Sharp pixel edges */
     text-shadow:
       0 0 1px var(--red),
       0 0 8px var(--red-glow);
     -webkit-font-smoothing: none;
     -moz-osx-font-smoothing: grayscale;
     font-variant-ligatures: none;
-    /* Center block */
     display: inline-block;
   }
 
   .logo__subtitle {
     margin-top: 14px;
-    font-family: var(--font-mono);
-    font-size: 15px;
-    letter-spacing: 0.18em;
+    font-family: var(--font-display); /* Iceberg */
+    font-size: 22px;
+    letter-spacing: 0.12em;
     color: var(--cyan);
     text-align: center;
   }
 
+  /* Tagline now uses Iceberg font (as shown in reference image) */
   .logo__tagline {
-    margin-top: 6px;
-    font-family: var(--font-mono);
-    font-size: 16px;
-    letter-spacing: 0.08em;
-    color: var(--text);
+    margin-top: 10px;
+    font-family: var(--font-display); /* Iceberg by Cyreal */
+    font-size: 28px;
+    letter-spacing: 0.04em;
+    color: var(--text-bright);
     text-align: center;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     justify-content: center;
   }
   .logo__tagline-arrow {
+    font-family: var(--font-mono);
+    font-size: 18px;
     color: var(--red);
     opacity: 0.7;
     letter-spacing: 0.1em;
+  }
+
+  /* Small credit line showing the font name */
+  .logo__font-credit {
+    margin-top: 8px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    color: var(--text-dim);
+    text-align: center;
+  }
+  .logo__font-credit strong {
+    font-family: var(--font-display);
+    color: var(--red-2);
+    font-weight: normal;
+    letter-spacing: 0.08em;
   }
 
   /* ========== SEARCH ========== */
@@ -487,8 +505,7 @@
   }
   .payload-view__item[aria-selected="true"] .payload-view__text { color: var(--red-2); }
 
-  /* ========== LAST SEARCH CARD ==========
-     Lower z-index and explicit spacing so it never overlaps the dropdown */
+  /* ========== LAST SEARCH CARD ========== */
   .last-search {
     width: 100%;
     max-width: 740px;
@@ -607,6 +624,9 @@
     .last-search__card { flex-wrap: wrap; }
     .last-search__link { width: 100%; justify-content: center; }
     .logo__ascii { font-size: 9px; }
+    .logo__tagline { font-size: 20px; gap: 8px; }
+    .logo__tagline-arrow { font-size: 14px; }
+    .logo__subtitle { font-size: 18px; }
   }
 </style>
 </head>
@@ -623,7 +643,7 @@
   </button>
 </header>
 
-<!-- ========== LOGO (straight, sharp, symmetric) ========== -->
+<!-- ========== LOGO ========== -->
 <section class="logo" aria-label="GoDork">
   <pre class="logo__ascii" aria-hidden="true">
  ██████╗  ██████╗   ██████╗  ██████╗ ██████╗ ██╗  ██╗
@@ -635,8 +655,11 @@
   <div class="logo__subtitle">G00gle D0rking Framew0rk</div>
   <div class="logo__tagline">
     <span class="logo__tagline-arrow">&gt;&gt;&gt;</span>
-    <span>⚠️  Find what they forgot to hide...</span>
+    <span>⚠️ Find what they forgot to hide...</span>
     <span class="logo__tagline-arrow">&lt;&lt;&lt;</span>
+  </div>
+  <div class="logo__font-credit">
+    font: <strong>Iceberg</strong> · by Cyreal
   </div>
   <h1 class="sr-only">GoDork — G00gle D0rking Framew0rk</h1>
 </section>
@@ -697,10 +720,9 @@
 <section class="last-search is-hidden" id="lastSearch" aria-live="polite" aria-label="Last search"></section>
 
 <script>
+/* (JS unchanged from your original — same module/payload logic) */
 'use strict';
-
 (() => {
-
   const MODULES = [
     { section: 'PASSWORDS', items: [
       { icon: '🔐', name: 'admin / panels', payloads: [
@@ -911,19 +933,11 @@
     lastSearch:       $('lastSearch'),
   };
 
-  const state = {
-    dropdownOpen: false,
-    selectedModule: null,
-    selectedPayload: null,
-  };
+  const state = { dropdownOpen: false, selectedModule: null, selectedPayload: null };
 
-  const escapeHtml = (s) =>
-    String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+  const escapeHtml = (s) => String(s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
   const buildSearchUrl = (q) => SEARCH_URL + encodeURIComponent(q);
 
@@ -939,13 +953,8 @@
     refs.moduleListView.innerHTML = MODULES.map((group) => `
       <div class="dropdown__section-header">${escapeHtml(group.section)}</div>
       ${group.items.map((mod) => `
-        <button
-          class="dropdown__item"
-          type="button"
-          role="option"
-          data-action="select-module"
-          data-module="${escapeHtml(mod.name)}"
-        >
+        <button class="dropdown__item" type="button" role="option"
+          data-action="select-module" data-module="${escapeHtml(mod.name)}">
           <span class="dropdown__item-icon">${mod.icon}</span>
           <span class="dropdown__item-name">${escapeHtml(mod.name)}</span>
           <span class="dropdown__item-count">${mod.payloads.length}</span>
@@ -958,14 +967,9 @@
   function renderPayloads(mod) {
     refs.payloadViewTitle.textContent = `${mod.name.toUpperCase()} — SELECT PAYLOAD`;
     refs.payloadList.innerHTML = mod.payloads.map((p, i) => `
-      <button
-        class="payload-view__item"
-        type="button"
-        role="option"
-        data-action="select-payload"
-        data-index="${i}"
-        aria-selected="${state.selectedPayload === p ? 'true' : 'false'}"
-      >
+      <button class="payload-view__item" type="button" role="option"
+        data-action="select-payload" data-index="${i}"
+        aria-selected="${state.selectedPayload === p ? 'true' : 'false'}">
         <span class="payload-view__dot" aria-hidden="true"></span>
         <span class="payload-view__text">${escapeHtml(p)}</span>
       </button>
@@ -983,9 +987,7 @@
     refs.dropdown.dataset.open = 'false';
     refs.modulePill.setAttribute('aria-expanded', 'false');
   }
-  function toggleDropdown() {
-    state.dropdownOpen ? closeDropdown() : openDropdown();
-  }
+  function toggleDropdown() { state.dropdownOpen ? closeDropdown() : openDropdown(); }
   function showModuleView() {
     refs.moduleListView.classList.remove('is-hidden');
     refs.payloadView.dataset.open = 'false';
@@ -1009,7 +1011,6 @@
     if (!state.selectedModule) return;
     const payload = state.selectedModule.payloads[Number(index)];
     if (!payload) return;
-
     state.selectedPayload = payload;
     refs.searchInput.value = payload;
     renderBadge();
@@ -1018,16 +1019,12 @@
   }
 
   function renderBadge() {
-    if (!state.selectedPayload) {
-      refs.badgeRow.innerHTML = '';
-      return;
-    }
+    if (!state.selectedPayload) { refs.badgeRow.innerHTML = ''; return; }
     refs.badgeRow.innerHTML = `
       <span class="badge">
         <span class="badge__text">${escapeHtml(state.selectedPayload)}</span>
         <button class="badge__close" type="button" data-action="clear-payload" aria-label="Clear payload">✕</button>
-      </span>
-    `;
+      </span>`;
   }
 
   function clearPayload() {
@@ -1039,10 +1036,7 @@
 
   function runSearch() {
     const q = refs.searchInput.value.trim();
-    if (!q) {
-      refs.searchInput.focus();
-      return;
-    }
+    if (!q) { refs.searchInput.focus(); return; }
     const url = buildSearchUrl(q);
     window.open(url, '_blank', 'noopener,noreferrer');
     renderLastSearch(q, url);
@@ -1051,16 +1045,9 @@
   function renderLastSearch(query, url) {
     const moduleName = state.selectedModule ? state.selectedModule.name : 'custom query';
     const moduleIcon = state.selectedModule ? state.selectedModule.icon : '🔍';
-
     refs.lastSearch.classList.remove('is-hidden');
     refs.lastSearch.innerHTML = `
-      <a
-        class="last-search__card"
-        href="${escapeHtml(url)}"
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label="Re-open search on Google"
-      >
+      <a class="last-search__card" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="Re-open search on Google">
         <span class="last-search__icon" aria-hidden="true">${moduleIcon}</span>
         <span class="last-search__body">
           <span class="last-search__label">
@@ -1076,8 +1063,7 @@
             <path d="M7 17L17 7"/><path d="M7 7h10v10"/>
           </svg>
         </span>
-      </a>
-    `;
+      </a>`;
   }
 
   function applyTheme(theme) {
@@ -1096,11 +1082,7 @@
   }
 
   function bindEvents() {
-    refs.modulePill.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleDropdown();
-    });
-
+    refs.modulePill.addEventListener('click', (e) => { e.stopPropagation(); toggleDropdown(); });
     refs.dropdown.addEventListener('click', (e) => {
       e.stopPropagation();
       const btn = e.target.closest('[data-action]');
@@ -1109,28 +1091,19 @@
       if (action === 'select-module')       handleSelectModule(btn.dataset.module);
       else if (action === 'select-payload') handleSelectPayload(btn.dataset.index);
     });
-
-    refs.backToModules.addEventListener('click', (e) => {
-      e.stopPropagation();
-      showModuleView();
-    });
-
+    refs.backToModules.addEventListener('click', (e) => { e.stopPropagation(); showModuleView(); });
     refs.badgeRow.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-action="clear-payload"]');
       if (btn) clearPayload();
     });
-
     refs.searchSubmit.addEventListener('click', runSearch);
     refs.searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
     });
-
     refs.themeToggle.addEventListener('click', toggleTheme);
-
     document.addEventListener('click', (e) => {
       if (!refs.searchBar.contains(e.target)) closeDropdown();
     });
-
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && state.dropdownOpen) {
         closeDropdown();
@@ -1139,18 +1112,11 @@
     });
   }
 
-  function init() {
-    initTheme();
-    renderModules();
-    bindEvents();
-  }
+  function init() { initTheme(); renderModules(); bindEvents(); }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-
+  } else { init(); }
 })();
 </script>
 </body>
